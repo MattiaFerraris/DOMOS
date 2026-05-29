@@ -90,23 +90,6 @@ export default function App() {
 
       {/* Main Grid dei Dispositivi */}
       <main className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-        {/* Card Philips Hue (Invariata) */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-200 hover:shadow-md transition-shadow">
-          <div className="flex justify-between items-start mb-6">
-            <h2 className="text-xl font-bold text-neutral-800">Philips Hue</h2>
-            <span className="text-amber-600 bg-amber-50 px-2 py-1 rounded text-xs font-bold uppercase tracking-wide border border-amber-100">
-              Luce
-            </span>
-          </div>
-          <p className="text-sm text-neutral-500 mb-6">
-            Stato attuale:{" "}
-            <span className="font-semibold text-amber-500">Accesa (80%)</span>
-          </p>
-          <button className="w-full py-2.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 rounded-xl font-semibold transition-colors cursor-pointer">
-            Spegni Luce
-          </button>
-        </div>
-
         {/* --- INIZIO SEZIONE TAPO DINAMICA --- */}
         {/* Genera automaticamente una card con il tuo design per ogni presa trovata */}
         {tapoDevices.map((device) => {
@@ -147,54 +130,6 @@ export default function App() {
           );
         })}
         {/* --- FINE SEZIONE TAPO DINAMICA --- */}
-
-        {/* Card Nenko (Invariata) */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-200 hover:shadow-md transition-shadow">
-          <div className="flex justify-between items-start mb-6">
-            <h2 className="text-xl font-bold text-neutral-800">
-              Nenko Telecomando
-            </h2>
-            <span className="text-purple-600 bg-purple-50 px-2 py-1 rounded text-xs font-bold uppercase tracking-wide border border-purple-100">
-              Radio
-            </span>
-          </div>
-          <p className="text-sm text-neutral-500 mb-6">
-            Ultimo comando:{" "}
-            <span className="font-semibold text-neutral-800">Nessuno</span>
-          </p>
-          <div className="flex gap-2">
-            <button className="flex-1 py-2 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-xl font-semibold transition-colors cursor-pointer">
-              Rosso
-            </button>
-            <button className="flex-1 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 border border-emerald-200 rounded-xl font-semibold transition-colors cursor-pointer">
-              Verde
-            </button>
-            <button className="flex-1 py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 rounded-xl font-semibold transition-colors cursor-pointer">
-              Blu
-            </button>
-          </div>
-        </div>
-
-        {/* Card Diffusore (Invariata) */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-200 hover:shadow-md transition-shadow">
-          <div className="flex justify-between items-start mb-6">
-            <h2 className="text-xl font-bold text-neutral-800">
-              Diffusore Fragranze
-            </h2>
-            <span className="text-rose-600 bg-rose-50 px-2 py-1 rounded text-xs font-bold uppercase tracking-wide border border-rose-100">
-              Scent
-            </span>
-          </div>
-          <p className="text-sm text-neutral-500 mb-6">
-            Capsula attiva:{" "}
-            <span className="font-semibold text-neutral-800">
-              Lavanda Relax
-            </span>
-          </p>
-          <button className="w-full py-2.5 border-2 border-neutral-200 hover:border-rose-500 hover:text-rose-600 text-neutral-700 rounded-xl font-semibold transition-colors cursor-pointer">
-            Spara Fragranza
-          </button>
-        </div>
       </main>
 
       {/* Sezione Scenari Multivendor (Invariata) */}
