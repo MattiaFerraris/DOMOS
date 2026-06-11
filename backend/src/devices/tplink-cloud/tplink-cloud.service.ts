@@ -208,8 +208,7 @@ export class TplinkCloudService {
 
     // Lo smistiamo allo specialista giusto
     if (protocol === 'kasa') {
-      //return await this.kasaService.setPowerState(ip, state);
-      return false; // <-- Per ora disabilitiamo Kasa, dato che non abbiamo ancora implementato il servizio
+      return await this.kasaService.setPowerState(ip, state);
     } else {
       return await this.tapoService.setPowerState(deviceId, ip, state);
     }

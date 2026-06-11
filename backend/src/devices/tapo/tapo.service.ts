@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { loginDeviceByIp } from 'tp-link-tapo-connect';
 
-// Estraiamo il tipo esatto della connessione restituita dalla libreria
+// tipo della connessione restituita dalla libreria
 type DeviceConnection = Awaited<ReturnType<typeof loginDeviceByIp>>;
 
 @Injectable()
@@ -12,7 +12,7 @@ export class TapoService {
   readonly email = 'mailDispositiviSmart@gmail.com';
   readonly password = 'hapjin-6mIpky-puhnux';
 
-  // LA CACHE: Indispensabile per non consumare tutta la RAM (Memory Leak)
+  // CACHE sessione
   private activeSessions = new Map<string, DeviceConnection>();
 
   // ── MOTORE LOCALE (Gestione Sessioni) ───────────────────────────
@@ -21,16 +21,13 @@ export class TapoService {
     deviceId: string,
     ip: string,
   ): Promise<DeviceConnection> {
-    // 1. Se abbiamo già una sessione aperta, usiamola (Costo memoria: zero)
     if (this.activeSessions.has(deviceId)) {
       return this.activeSessions.get(deviceId)!;
     }
 
-    // 2. Altrimenti, crea la connessione crittografata usando l'IP
     this.logger.log(`Creazione nuova sessione Tapo per IP: ${ip}`);
     const session = await loginDeviceByIp(this.email, this.password, ip);
 
-    // 3. Salva la sessione in cache per i comandi futuri
     this.activeSessions.set(deviceId, session);
 
     return session;
@@ -48,9 +45,8 @@ export class TapoService {
       const info = await device.getDeviceInfo();
       return info.device_on;
     } catch (error) {
-      // Se fallisce, rimuoviamo la sessione corrotta
       this.activeSessions.delete(deviceId);
-      throw error; // Rilanciamo l'errore al Coordinatore che lo gestirà
+      throw error;
     }
   }
 
@@ -81,7 +77,7 @@ export class TapoService {
   }
 
   /**
-   * Controlla Accensione, Luminosità e Colore per le Strisce LED (L900, ecc.)
+   * Controlla Accensione, Luminosità e Colore per le Strisce LED tapo
    */
   async setLightStripState(
     deviceId: string,

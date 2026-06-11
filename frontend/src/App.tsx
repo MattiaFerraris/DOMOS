@@ -1,31 +1,35 @@
 import React, { useState, useEffect } from "react";
 
-interface TapoDevice {
+// Abbiamo rinominato l'interfaccia per renderla generica (Multivendor)
+interface SmartDevice {
   deviceId: string;
   alias: string;
   isOn: boolean;
   deviceModel: string;
+  deviceType?: string; // Arriva dal cloud
   brightness?: number;
   color?: string;
 }
 
 export default function App() {
-  const [tapoDevices, setTapoDevices] = useState<TapoDevice[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true); // Aggiunto stato di caricamento
+  const [devices, setDevices] = useState<SmartDevice[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Funzione separata per poterla chiamare sia all'avvio che manualmente
   const fetchDevices = async () => {
     setIsLoading(true);
     try {
       const res = await fetch("http://localhost:3000/api/tapo/list");
       const data = await res.json();
+
       if (data.status === "OK") {
-        const initializedDevices = data.data.map((d: TapoDevice) => ({
+        const initializedDevices = data.data.map((d: any) => ({
           ...d,
+          // MAPPATURA CRUCIALE: Il backend manda 'device_on', React usa 'isOn'
+          isOn: d.device_on || false,
           brightness: d.brightness || 100,
           color: d.color || "white",
         }));
-        setTapoDevices(initializedDevices);
+        setDevices(initializedDevices);
       }
     } catch (err) {
       console.error("Errore fetch dispositivi:", err);
@@ -35,15 +39,12 @@ export default function App() {
   };
 
   useEffect(() => {
-    const loadDevices = async () => {
-      await fetchDevices();
-    };
-
-    void loadDevices();
+    fetchDevices();
   }, []);
 
   const togglePlug = async (deviceId: string, currentIsOn: boolean) => {
-    setTapoDevices((prev) =>
+    // Optimistic UI update
+    setDevices((prev) =>
       prev.map((d) =>
         d.deviceId === deviceId ? { ...d, isOn: !currentIsOn } : d,
       ),
@@ -57,7 +58,8 @@ export default function App() {
       });
       if (!response.ok) throw new Error("Network error");
     } catch {
-      setTapoDevices((prev) =>
+      // Rollback in caso di errore
+      setDevices((prev) =>
         prev.map((d) =>
           d.deviceId === deviceId ? { ...d, isOn: currentIsOn } : d,
         ),
@@ -66,7 +68,7 @@ export default function App() {
   };
 
   const applyLightSettings = async (
-    device: TapoDevice,
+    device: SmartDevice,
     updates: { state?: boolean; color?: string; brightness?: number },
   ) => {
     const newState = updates.state !== undefined ? updates.state : device.isOn;
@@ -78,7 +80,7 @@ export default function App() {
       updates.color !== undefined ||
       updates.brightness !== undefined;
 
-    setTapoDevices((prev) =>
+    setDevices((prev) =>
       prev.map((d) =>
         d.deviceId === device.deviceId
           ? {
@@ -108,14 +110,13 @@ export default function App() {
   };
 
   const handleLocalBrightnessDrag = (deviceId: string, brightness: number) => {
-    setTapoDevices((prev) =>
+    setDevices((prev) =>
       prev.map((d) => (d.deviceId === deviceId ? { ...d, brightness } : d)),
     );
   };
 
   return (
     <div className="min-h-screen bg-neutral-100 p-6 md:p-10 font-sans text-neutral-800">
-      {/* HEADER SISTEMATO */}
       <header className="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h1 className="text-4xl font-extrabold text-indigo-600 tracking-tight">
@@ -126,9 +127,7 @@ export default function App() {
           </p>
         </div>
 
-        {/* Gruppo Controlli in alto a destra */}
         <div className="flex flex-wrap items-center gap-3">
-          {/* Badge Connessione */}
           <div className="px-4 py-2 bg-green-100 text-green-700 rounded-full text-sm font-bold flex items-center gap-2 shadow-sm border border-green-200">
             <span className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></span>
             Backend Connesso
@@ -137,33 +136,46 @@ export default function App() {
       </header>
 
       <main className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-        {/* Placeholder durante il caricamento (opzionale) */}
-        {isLoading && tapoDevices.length === 0 && (
+        {isLoading && devices.length === 0 && (
           <div className="col-span-full text-center py-10 text-neutral-500">
-            Ricerca dispositivi in corso...
+            Lettura stato dispositivi in corso...
           </div>
         )}
 
-        {tapoDevices.map((device) => {
+        {devices.map((device) => {
           const isPoweredOn = device.isOn;
           const isLight =
             device.deviceModel.toUpperCase().includes("L") ||
             device.deviceModel.toUpperCase().includes("BULB");
+
+          // Logica per determinare la marca e creare un piccolo badge
+          const isKasa =
+            device.deviceType?.toUpperCase().startsWith("IOT.") ||
+            device.deviceModel.toUpperCase().startsWith("HS");
+          const brandName = isKasa ? "KASA" : "TAPO";
 
           return (
             <div
               key={device.deviceId}
               className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-200 hover:shadow-md transition-shadow flex flex-col"
             >
-              <div className="flex justify-between items-start mb-6">
+              <div className="flex justify-between items-start mb-4">
                 <h2
                   className="text-xl font-bold text-neutral-800 line-clamp-1"
                   title={device.alias}
                 >
                   {device.alias}
                 </h2>
+
+                {/* Badge Marca */}
+                <span className="text-xs font-black text-neutral-300 tracking-widest ml-2">
+                  {brandName}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2 mb-6">
                 <span
-                  className={`px-2 py-1 rounded text-xs font-bold uppercase tracking-wide border flex-shrink-0
+                  className={`px-2 py-1 rounded text-xs font-bold uppercase tracking-wide border
                   ${
                     isLight
                       ? "text-amber-600 bg-amber-50 border-amber-100"
@@ -172,19 +184,17 @@ export default function App() {
                 >
                   {isLight ? "Luce LED" : "Presa Smart"}
                 </span>
+                <span className="text-sm text-neutral-500">
+                  •{" "}
+                  <span
+                    className={`font-semibold ${isPoweredOn ? "text-green-600" : "text-neutral-800"}`}
+                  >
+                    {isPoweredOn ? "Accesa" : "Spenta"}
+                  </span>
+                </span>
               </div>
 
-              <p className="text-sm text-neutral-500 mb-6">
-                Stato:{" "}
-                <span
-                  className={`font-semibold ${isPoweredOn ? "text-green-600" : "text-neutral-800"}`}
-                >
-                  {isPoweredOn ? "Accesa" : "Spenta"}
-                </span>
-              </p>
-
               <div className="mt-auto">
-                {/* Pulsante di Accensione Dinamico */}
                 <button
                   onClick={() =>
                     isLight
@@ -206,7 +216,6 @@ export default function App() {
                       : "Accendi Presa"}
                 </button>
 
-                {/* Controlli esclusivi per le Luci */}
                 {isLight && (
                   <div className="mt-4 p-4 bg-neutral-50 rounded-xl border border-neutral-100">
                     <div className="mb-4">
