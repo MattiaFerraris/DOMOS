@@ -43,7 +43,8 @@ export class TplinkCloudService {
   private loadIpMap(): Record<string, string> {
     try {
       if (fs.existsSync(CONFIG_PATH)) {
-        return JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf-8'));
+        const raw = fs.readFileSync(CONFIG_PATH, 'utf-8');
+        return JSON.parse(raw) as Record<string, string>;
       }
     } catch {
       this.logger.error('Impossibile leggere device-config.json');
