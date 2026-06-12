@@ -129,6 +129,7 @@ export default function DeviceCard({
             className={`font-semibold ${isPoweredOn ? "text-green-600" : "text-neutral-800"}`}
           >
             {isPoweredOn ? "Accesa" : "Spenta"}
+            {device.offline ? " (Offline)" : ""}
           </span>
         </span>
       </div>
@@ -137,22 +138,27 @@ export default function DeviceCard({
       <div className="mt-auto" onClick={(e) => e.stopPropagation()}>
         <button
           onClick={handleToggle}
-          className={`w-full cursor-pointer rounded-xl py-2.5 font-semibold shadow-sm transition-colors ${
-            isPoweredOn
-              ? "bg-neutral-100 text-neutral-800 hover:bg-neutral-200"
-              : "bg-blue-600 text-white hover:bg-blue-700"
+          disabled={device.offline}
+          className={`w-full rounded-xl py-2.5 font-semibold shadow-sm transition-colors ${
+            device.offline
+              ? "cursor-not-allowed bg-neutral-100 text-neutral-300"
+              : isPoweredOn
+                ? "cursor-pointer bg-neutral-100 text-neutral-800 hover:bg-neutral-200"
+                : "cursor-pointer bg-blue-600 text-white hover:bg-blue-700"
           }`}
         >
-          {isPoweredOn
-            ? isLight
-              ? "Spegni Luce"
-              : "Spegni Presa"
-            : isLight
-              ? "Accendi Luce"
-              : "Accendi Presa"}
+          {device.offline
+            ? "Non disponibile"
+            : isPoweredOn
+              ? isLight
+                ? "Spegni Luce"
+                : "Spegni Presa"
+              : isLight
+                ? "Accendi Luce"
+                : "Accendi Presa"}
         </button>
 
-        {isLight ? (
+        {isLight && !device.offline ? (
           <LightControls
             device={device}
             onBrightnessDrag={onBrightnessDrag}
@@ -161,7 +167,7 @@ export default function DeviceCard({
             }
             onColorSelect={(color) => onApplyLight(device, { color })}
           />
-        ) : (
+        ) : !isLight && !device.offline ? (
           <PlugTimer
             device={device}
             timer={timer}
@@ -171,7 +177,7 @@ export default function DeviceCard({
             }
             onCancel={() => onCancelTimer(device.deviceId)}
           />
-        )}
+        ) : null}
       </div>
     </div>
   );

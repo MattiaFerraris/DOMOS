@@ -9,6 +9,7 @@ import { KasaService } from '../kasa/kasa.service';
 
 export interface TapoDeviceWithState extends TapoDevice {
   device_on: boolean;
+  offline?: boolean;
 }
 
 // DTO normalizzati comuni a Tapo e Kasa
@@ -173,7 +174,7 @@ export class TplinkCloudService {
           this.logger.warn(
             `IP mancante per ${d.alias} — aggiungilo a device-config.json`,
           );
-          result.push({ ...d, device_on: false });
+          result.push({ ...d, device_on: false, offline: true });
           continue;
         }
 
@@ -188,7 +189,7 @@ export class TplinkCloudService {
           result.push({ ...d, device_on: isOn });
         } catch {
           this.logger.warn(`Impossibile comunicare in locale con ${d.alias}`);
-          result.push({ ...d, device_on: false });
+          result.push({ ...d, device_on: false, offline: true });
         }
       }
       return result;

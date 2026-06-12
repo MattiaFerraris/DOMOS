@@ -118,9 +118,15 @@ export default function DeviceDetailModal({
                 {isLight ? "Luce LED" : "Presa Smart"}
               </span>
               <span
-                className={`text-sm font-semibold ${isPoweredOn ? "text-green-600" : "text-neutral-500"}`}
+                className={`text-sm font-semibold ${
+                  device.offline
+                    ? "text-red-500"
+                    : isPoweredOn
+                      ? "text-green-600"
+                      : "text-neutral-500"
+                }`}
               >
-                {isPoweredOn ? "Accesa" : "Spenta"}
+                {device.offline ? "Offline" : isPoweredOn ? "Accesa" : "Spenta"}
               </span>
             </div>
           </div>
@@ -147,17 +153,24 @@ export default function DeviceDetailModal({
           {/* Comando principale */}
           <button
             onClick={handleToggle}
-            className={`w-full cursor-pointer rounded-xl py-3 font-semibold shadow-sm transition-colors ${
-              isPoweredOn
-                ? "bg-neutral-100 text-neutral-800 hover:bg-neutral-200"
-                : "bg-blue-600 text-white hover:bg-blue-700"
+            disabled={device.offline}
+            className={`w-full rounded-xl py-3 font-semibold shadow-sm transition-colors ${
+              device.offline
+                ? "cursor-not-allowed bg-neutral-100 text-neutral-300"
+                : isPoweredOn
+                  ? "cursor-pointer bg-neutral-100 text-neutral-800 hover:bg-neutral-200"
+                  : "cursor-pointer bg-blue-600 text-white hover:bg-blue-700"
             }`}
           >
-            {isPoweredOn ? "Spegni" : "Accendi"}
+            {device.offline
+              ? "Non disponibile"
+              : isPoweredOn
+                ? "Spegni"
+                : "Accendi"}
           </button>
 
           {/* Controlli specifici */}
-          {isLight ? (
+          {isLight && !device.offline ? (
             <>
               <LightControls
                 device={device}
@@ -173,7 +186,7 @@ export default function DeviceDetailModal({
                 onColorCommit={(color) => onApplyLight(device, { color })}
               />
             </>
-          ) : (
+          ) : !isLight && !device.offline ? (
             <PlugTimer
               device={device}
               timer={timer}
@@ -183,22 +196,26 @@ export default function DeviceDetailModal({
               }
               onCancel={() => onCancelTimer(device.deviceId)}
             />
-          )}
+          ) : null}
 
           {/* Consumo energetico */}
-          <EnergyPanel energy={energy} loading={detailsLoading} />
+          {!device.offline ? (
+            <EnergyPanel energy={energy} loading={detailsLoading} />
+          ) : null}
 
           {/* Schedulazioni ricorrenti */}
-          <ScheduleEditor
-            deviceId={device.deviceId}
-            schedules={schedules}
-            onAdd={onAddSchedule}
-            onUpdate={onUpdateSchedule}
-            onDelete={onDeleteSchedule}
-          />
+          {!device.offline ? (
+            <ScheduleEditor
+              deviceId={device.deviceId}
+              schedules={schedules}
+              onAdd={onAddSchedule}
+              onUpdate={onUpdateSchedule}
+              onDelete={onDeleteSchedule}
+            />
+          ) : null}
 
           {/* Info live (WiFi, uptime, firmware...) */}
-          <DeviceInfoPanel info={info} />
+          {!device.offline ? <DeviceInfoPanel info={info} /> : null}
 
           {/* Identità dispositivo */}
           <div className="rounded-xl border border-neutral-100 bg-neutral-50 px-4">

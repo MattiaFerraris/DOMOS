@@ -15,6 +15,7 @@ interface RawDevice {
   deviceModel: string;
   deviceType?: string;
   device_on?: boolean;
+  offline?: boolean;
   brightness?: number;
   color?: string;
 }
@@ -37,6 +38,7 @@ export async function fetchDevices(): Promise<SmartDevice[]> {
     isOn: d.device_on || false,
     brightness: d.brightness || 100,
     color: d.color || "white",
+    offline: d.offline || false,
   }));
 }
 

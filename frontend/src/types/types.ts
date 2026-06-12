@@ -3,6 +3,7 @@ export interface SmartDevice {
   deviceId: string;
   alias: string;
   isOn: boolean;
+  offline?: boolean;
   deviceModel: string;
   deviceType?: string; // Arriva dal cloud
   brightness?: number;
