@@ -11,6 +11,24 @@ export interface TapoDeviceWithState extends TapoDevice {
   device_on: boolean;
 }
 
+// DTO normalizzati comuni a Tapo e Kasa
+export interface DeviceEnergy {
+  supported: boolean;
+  powerW?: number;
+  todayKwh?: number;
+  monthKwh?: number;
+  voltage?: number;
+}
+
+export interface DeviceInfo {
+  rssi?: number;
+  signal?: number;
+  onTimeSec?: number;
+  overheated?: boolean;
+  firmware?: string;
+  ssid?: string;
+}
+
 const CONFIG_PATH = path.join(process.cwd(), 'device-config.json');
 const INFO_PATH = path.join(process.cwd(), 'devices-info.json');
 
@@ -163,7 +181,7 @@ export class TplinkCloudService {
           let isOn = false;
           // DELEGAZIONE AI LAVORATORI LOCALI
           if (protocol === 'kasa') {
-            //isOn = await this.kasaService.getDeviceStatus(ip);
+            isOn = await this.kasaService.getDeviceStatus(ip);
           } else {
             isOn = await this.tapoService.getDeviceStatus(d.deviceId, ip);
           }
@@ -240,5 +258,87 @@ export class TplinkCloudService {
       brightness,
       color,
     );
+  }
+
+  // ── ENERGIA & INFO (instradamento + normalizzazione) ────────────
+
+  // Risolve ip e protocollo di un dispositivo dalla cache
+  private async resolveDevice(
+    deviceId: string,
+  ): Promise<{ ip: string; protocol: 'tapo' | 'kasa' } | null> {
+    const ip = this.loadIpMap()[deviceId];
+    if (!ip) return null;
+    const devices = await this.getCachedDevices();
+    const target = devices.find((d) => d.deviceId === deviceId);
+    const protocol = target ? this.getDeviceProtocol(target) : 'tapo';
+    return { ip, protocol };
+  }
+
+  async getDeviceEnergy(deviceId: string): Promise<DeviceEnergy> {
+    const resolved = await this.resolveDevice(deviceId);
+    if (!resolved) return { supported: false };
+
+    try {
+      if (resolved.protocol === 'kasa') {
+        const r = await this.kasaService.getEnergy(resolved.ip);
+        if (!r) return { supported: false };
+        const powerW =
+          r.power ?? (r.power_mw != null ? r.power_mw / 1000 : undefined);
+        const voltage =
+          r.voltage ?? (r.voltage_mv != null ? r.voltage_mv / 1000 : undefined);
+        const totalKwh =
+          r.total ?? (r.total_wh != null ? r.total_wh / 1000 : undefined);
+        return { supported: true, powerW, voltage, todayKwh: totalKwh };
+      }
+
+      const r = await this.tapoService.getEnergyUsage(deviceId, resolved.ip);
+      if (!r || r.current_power == null) return { supported: false };
+      return {
+        supported: true,
+        powerW: r.current_power / 1000, // mW → W
+        todayKwh: r.today_energy != null ? r.today_energy / 1000 : undefined,
+        monthKwh: r.month_energy != null ? r.month_energy / 1000 : undefined,
+      };
+    } catch {
+      return { supported: false };
+    }
+  }
+
+  async getDeviceInfo(deviceId: string): Promise<DeviceInfo> {
+    const resolved = await this.resolveDevice(deviceId);
+    if (!resolved) return {};
+
+    try {
+      if (resolved.protocol === 'kasa') {
+        const s = await this.kasaService.getInfo(resolved.ip);
+        return {
+          rssi: s.rssi,
+          onTimeSec: s.on_time,
+          firmware: s.sw_ver,
+        };
+      }
+
+      const i = await this.tapoService.getFullInfo(deviceId, resolved.ip);
+      return {
+        rssi: i.rssi,
+        signal: i.signal_level,
+        onTimeSec: i.on_time,
+        overheated: i.overheated,
+        firmware: i.fw_ver,
+        ssid: this.decodeBase64(i.ssid),
+      };
+    } catch {
+      return {};
+    }
+  }
+
+  // Tapo codifica alcuni campi (ssid) in base64
+  private decodeBase64(value?: string): string | undefined {
+    if (!value) return undefined;
+    try {
+      return Buffer.from(value, 'base64').toString('utf-8');
+    } catch {
+      return value;
+    }
   }
 }

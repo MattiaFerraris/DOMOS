@@ -53,6 +53,24 @@ export class KasaService {
   }
 
   /**
+   * Legge il consumo energetico in tempo reale (solo dispositivi con emeter, es. HS110/KP115).
+   * Ritorna null se il dispositivo non supporta la misurazione.
+   */
+  async getEnergy(ip: string): Promise<any | null> {
+    const device = await this.getKasaConnection(ip);
+    if (!(device as any).supportsEmeter) return null;
+    return (device as any).emeter.getRealtime();
+  }
+
+  /**
+   * Legge le informazioni di sistema (WiFi, firmware, uptime...).
+   */
+  async getInfo(ip: string): Promise<any> {
+    const device = await this.getKasaConnection(ip);
+    return device.getSysInfo();
+  }
+
+  /**
    * Accende o spegne una presa Kasa (es. HS100)
    */
   async setPowerState(ip: string, state: boolean): Promise<boolean> {

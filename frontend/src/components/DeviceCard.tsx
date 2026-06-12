@@ -1,11 +1,11 @@
-import type { SmartDevice, LightUpdates, DeviceTimer } from "../types/types";
+import type { SmartDevice, LightUpdates, OneShotTimer } from "../types/types";
 import { isLightDevice, getBrand } from "../types/types";
 import LightControls from "./LightControls";
 import PlugTimer from "./PlugTimer";
 
 interface DeviceCardProps {
   device: SmartDevice;
-  timer?: DeviceTimer;
+  timer?: OneShotTimer;
   now: number;
   onTogglePlug: (deviceId: string, currentIsOn: boolean) => void;
   onApplyLight: (device: SmartDevice, updates: LightUpdates) => void;

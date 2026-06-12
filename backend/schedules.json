@@ -1,0 +1,29 @@
+{
+  "timers": [],
+  "schedules": [
+    {
+      "id": "08af79c0-2836-4f45-9bb9-810db9d04996",
+      "deviceId": "80235B6AFDDBE221ED384A8410CABE1421F29048",
+      "targetState": true,
+      "time": "16:52",
+      "days": [
+        5
+      ],
+      "enabled": true
+    },
+    {
+      "id": "84de4932-3700-49f6-aa64-f3cfcef1cff8",
+      "deviceId": "80064DC3BDEFB4CC5AB7B2536C756CE21B36FF32",
+      "targetState": false,
+      "time": "16:53",
+      "days": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "enabled": true
+    }
+  ]
+}

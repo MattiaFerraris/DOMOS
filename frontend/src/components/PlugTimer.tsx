@@ -1,8 +1,8 @@
-import type { SmartDevice, DeviceTimer } from "../types/types";
+import type { SmartDevice, OneShotTimer } from "../types/types";
 
 interface PlugTimerProps {
   device: SmartDevice;
-  timer?: DeviceTimer;
+  timer?: OneShotTimer;
   now: number; // timestamp corrente (aggiornato ogni secondo dal parent)
   onSchedule: (minutes: number, targetState: boolean) => void;
   onCancel: () => void;

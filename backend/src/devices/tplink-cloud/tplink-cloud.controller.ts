@@ -3,6 +3,7 @@ import {
   Post,
   Get,
   Body,
+  Query,
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
@@ -76,5 +77,23 @@ export class TplinkCloudController {
       );
     }
     return { status: 'OK' };
+  }
+
+  @Get('energy')
+  async getEnergy(@Query('deviceId') deviceId: string) {
+    if (!deviceId) {
+      throw new HttpException('deviceId mancante', HttpStatus.BAD_REQUEST);
+    }
+    const data = await this.cloudService.getDeviceEnergy(deviceId);
+    return { status: 'OK', data };
+  }
+
+  @Get('info')
+  async getInfo(@Query('deviceId') deviceId: string) {
+    if (!deviceId) {
+      throw new HttpException('deviceId mancante', HttpStatus.BAD_REQUEST);
+    }
+    const data = await this.cloudService.getDeviceInfo(deviceId);
+    return { status: 'OK', data };
   }
 }

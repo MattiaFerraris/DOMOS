@@ -77,6 +77,22 @@ export class TapoService {
   }
 
   /**
+   * Legge il consumo energetico (per dispositivi che lo supportano, es. P110).
+   */
+  async getEnergyUsage(deviceId: string, ip: string): Promise<any> {
+    const device = await this.getTapoConnection(deviceId, ip);
+    return device.getEnergyUsage();
+  }
+
+  /**
+   * Legge le informazioni complete del dispositivo (WiFi, uptime, firmware...).
+   */
+  async getFullInfo(deviceId: string, ip: string): Promise<any> {
+    const device = await this.getTapoConnection(deviceId, ip);
+    return device.getDeviceInfo();
+  }
+
+  /**
    * Controlla Accensione, Luminosità e Colore per le Strisce LED tapo
    */
   async setLightStripState(

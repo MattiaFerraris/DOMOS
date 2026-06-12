@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useDevices } from "../hooks/useDevices";
-import { useTimers } from "../hooks/useTimers";
+import { useScheduler } from "../hooks/useScheduler";
+import { useDeviceDetails } from "../hooks/useDeviceDetails";
 import Header from "../components/Header";
 import DeviceCard from "../components/DeviceCard";
 import DeviceDetailModal from "../components/DeviceDetailModal";
@@ -10,19 +11,30 @@ export default function Dashboard() {
     devices,
     isLoading,
     reload,
-    setPlugPower,
     togglePlug,
     applyLightSettings,
     handleLocalBrightnessDrag,
     handleLocalColorDrag,
   } = useDevices();
 
-  // I timer pianificati impostano lo stato assoluto della presa allo scadere
-  const { timers, now, scheduleTimer, cancelTimer } = useTimers(setPlugPower);
+  // Timer e schedulazioni sono pianificati ed eseguiti dal backend
+  const {
+    timers,
+    schedules,
+    now,
+    scheduleTimer,
+    cancelTimer,
+    addSchedule,
+    updateSchedule,
+    deleteSchedule,
+  } = useScheduler();
 
   // Dispositivo selezionato per il modal di dettaglio
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selectedDevice = devices.find((d) => d.deviceId === selectedId) ?? null;
+
+  // Energia + info del dispositivo aperto nel modal
+  const { energy, info, loading: detailsLoading } = useDeviceDetails(selectedId);
 
   return (
     <div className="min-h-screen bg-neutral-100 p-6 font-sans text-neutral-800 md:p-10">
@@ -63,6 +75,10 @@ export default function Dashboard() {
           device={selectedDevice}
           timer={timers[selectedDevice.deviceId]}
           now={now}
+          energy={energy}
+          info={info}
+          detailsLoading={detailsLoading}
+          schedules={schedules}
           onClose={() => setSelectedId(null)}
           onTogglePlug={togglePlug}
           onApplyLight={applyLightSettings}
@@ -70,6 +86,9 @@ export default function Dashboard() {
           onColorDrag={handleLocalColorDrag}
           onScheduleTimer={scheduleTimer}
           onCancelTimer={cancelTimer}
+          onAddSchedule={addSchedule}
+          onUpdateSchedule={updateSchedule}
+          onDeleteSchedule={deleteSchedule}
         />
       )}
     </div>

@@ -1,4 +1,10 @@
-import type { SmartDevice } from "../types/types";
+import type {
+  SmartDevice,
+  OneShotTimer,
+  RecurringSchedule,
+  DeviceEnergy,
+  DeviceInfo,
+} from "../types/types";
 
 const API_BASE = "http://localhost:3000/api";
 
@@ -60,4 +66,85 @@ export async function setLight(
     body: JSON.stringify({ deviceId, state, color, brightness }),
   });
   if (!response.ok) throw new Error("Network error");
+}
+
+// ── Energia & Info ────────────────────────────────────────────────
+export async function fetchEnergy(deviceId: string): Promise<DeviceEnergy> {
+  const res = await fetch(
+    `${API_BASE}/tapo/energy?deviceId=${encodeURIComponent(deviceId)}`,
+  );
+  const data = await res.json();
+  return data.status === "OK" ? data.data : { supported: false };
+}
+
+export async function fetchDeviceInfo(deviceId: string): Promise<DeviceInfo> {
+  const res = await fetch(
+    `${API_BASE}/tapo/info?deviceId=${encodeURIComponent(deviceId)}`,
+  );
+  const data = await res.json();
+  return data.status === "OK" ? data.data : {};
+}
+
+// ── Timer one-shot ────────────────────────────────────────────────
+export async function listTimers(): Promise<OneShotTimer[]> {
+  const res = await fetch(`${API_BASE}/scheduler/timers`);
+  const data = await res.json();
+  return data.status === "OK" ? data.data : [];
+}
+
+export async function addTimer(
+  deviceId: string,
+  delayMinutes: number,
+  targetState: boolean,
+): Promise<void> {
+  const res = await fetch(`${API_BASE}/scheduler/timer`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ deviceId, delayMinutes, targetState }),
+  });
+  if (!res.ok) throw new Error("Network error");
+}
+
+export async function cancelTimer(id: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/scheduler/timer/${id}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) throw new Error("Network error");
+}
+
+// ── Schedulazioni ricorrenti ──────────────────────────────────────
+export async function listSchedules(): Promise<RecurringSchedule[]> {
+  const res = await fetch(`${API_BASE}/scheduler/schedules`);
+  const data = await res.json();
+  return data.status === "OK" ? data.data : [];
+}
+
+export async function addSchedule(
+  input: Omit<RecurringSchedule, "id">,
+): Promise<void> {
+  const res = await fetch(`${API_BASE}/scheduler/schedule`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+  if (!res.ok) throw new Error("Network error");
+}
+
+export async function updateSchedule(
+  id: string,
+  patch: Partial<Omit<RecurringSchedule, "id">>,
+): Promise<void> {
+  const res = await fetch(`${API_BASE}/scheduler/schedule/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(patch),
+  });
+  if (!res.ok) throw new Error("Network error");
+}
+
+export async function deleteSchedule(id: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/scheduler/schedule/${id}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) throw new Error("Network error");
 }

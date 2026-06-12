@@ -1,14 +1,28 @@
 import { useEffect } from "react";
-import type { SmartDevice, LightUpdates, DeviceTimer } from "../types/types";
+import type {
+  SmartDevice,
+  LightUpdates,
+  OneShotTimer,
+  RecurringSchedule,
+  DeviceEnergy,
+  DeviceInfo,
+} from "../types/types";
 import { isLightDevice, getBrand } from "../types/types";
 import LightControls from "./LightControls";
 import ColorSlider from "./ColorSlider";
 import PlugTimer from "./PlugTimer";
+import EnergyPanel from "./EnergyPanel";
+import DeviceInfoPanel from "./DeviceInfoPanel";
+import ScheduleEditor from "./ScheduleEditor";
 
 interface DeviceDetailModalProps {
   device: SmartDevice;
-  timer?: DeviceTimer;
+  timer?: OneShotTimer;
   now: number;
+  energy: DeviceEnergy | null;
+  info: DeviceInfo | null;
+  detailsLoading: boolean;
+  schedules: RecurringSchedule[];
   onClose: () => void;
   onTogglePlug: (deviceId: string, currentIsOn: boolean) => void;
   onApplyLight: (device: SmartDevice, updates: LightUpdates) => void;
@@ -20,14 +34,23 @@ interface DeviceDetailModalProps {
     targetState: boolean,
   ) => void;
   onCancelTimer: (deviceId: string) => void;
+  onAddSchedule: (input: Omit<RecurringSchedule, "id">) => void;
+  onUpdateSchedule: (
+    id: string,
+    patch: Partial<Omit<RecurringSchedule, "id">>,
+  ) => void;
+  onDeleteSchedule: (id: string) => void;
 }
 
-// Riga di una proprietà nella scheda informazioni
+// Riga di una proprietà nella scheda identità
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between gap-4 py-2">
       <span className="text-sm font-medium text-neutral-500">{label}</span>
-      <span className="truncate text-sm font-semibold text-neutral-800" title={value}>
+      <span
+        className="truncate text-sm font-semibold text-neutral-800"
+        title={value}
+      >
         {value}
       </span>
     </div>
@@ -38,6 +61,10 @@ export default function DeviceDetailModal({
   device,
   timer,
   now,
+  energy,
+  info,
+  detailsLoading,
+  schedules,
   onClose,
   onTogglePlug,
   onApplyLight,
@@ -45,6 +72,9 @@ export default function DeviceDetailModal({
   onColorDrag,
   onScheduleTimer,
   onCancelTimer,
+  onAddSchedule,
+  onUpdateSchedule,
+  onDeleteSchedule,
 }: DeviceDetailModalProps) {
   const isLight = isLightDevice(device);
   const isPoweredOn = device.isOn;
@@ -113,7 +143,7 @@ export default function DeviceDetailModal({
         </div>
 
         {/* Corpo */}
-        <div className="space-y-6 p-6">
+        <div className="space-y-5 p-6">
           {/* Comando principale */}
           <button
             onClick={handleToggle}
@@ -155,7 +185,22 @@ export default function DeviceDetailModal({
             />
           )}
 
-          {/* Informazioni dispositivo */}
+          {/* Consumo energetico */}
+          <EnergyPanel energy={energy} loading={detailsLoading} />
+
+          {/* Schedulazioni ricorrenti */}
+          <ScheduleEditor
+            deviceId={device.deviceId}
+            schedules={schedules}
+            onAdd={onAddSchedule}
+            onUpdate={onUpdateSchedule}
+            onDelete={onDeleteSchedule}
+          />
+
+          {/* Info live (WiFi, uptime, firmware...) */}
+          <DeviceInfoPanel info={info} />
+
+          {/* Identità dispositivo */}
           <div className="rounded-xl border border-neutral-100 bg-neutral-50 px-4">
             <InfoRow label="Marca" value={brand} />
             <div className="border-t border-neutral-100" />
@@ -164,11 +209,6 @@ export default function DeviceDetailModal({
             <InfoRow label="Tipo" value={device.deviceType ?? "—"} />
             <div className="border-t border-neutral-100" />
             <InfoRow label="ID dispositivo" value={device.deviceId} />
-          </div>
-
-          {/* Spazio per funzionalità future */}
-          <div className="rounded-xl border border-dashed border-neutral-200 p-4 text-center text-sm text-neutral-400">
-            Altre funzionalità in arrivo
           </div>
         </div>
       </div>
