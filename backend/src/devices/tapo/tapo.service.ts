@@ -91,8 +91,8 @@ export class TapoService {
 
       if (state) {
         await device.turnOn();
-        await device.setBrightness(brightness);
         await device.setColour(color);
+        await device.setBrightness(brightness);
         this.logger.log(
           `Tapo LED ${deviceId} ACCESA (${color}, ${brightness}%)`,
         );
