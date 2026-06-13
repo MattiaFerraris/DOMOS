@@ -26,6 +26,7 @@ export class TapoService {
     }
 
     this.logger.log(`Creazione nuova sessione Tapo per IP: ${ip}`);
+
     const session = await loginDeviceByIp(this.email, this.password, ip);
 
     this.activeSessions.set(deviceId, session);

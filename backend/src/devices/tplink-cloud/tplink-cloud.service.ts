@@ -181,11 +181,18 @@ export class TplinkCloudService {
         try {
           let isOn = false;
           // DELEGAZIONE AI LAVORATORI LOCALI
+          const startTime: number = Date.now();
           if (protocol === 'kasa') {
             isOn = await this.kasaService.getDeviceStatus(ip);
           } else {
             isOn = await this.tapoService.getDeviceStatus(d.deviceId, ip);
           }
+          const endTime: number = Date.now();
+
+          this.logger.log(
+            `Stato ${d.alias} (${protocol}) → ${isOn} in ${endTime - startTime}ms`,
+          );
+
           result.push({ ...d, device_on: isOn });
         } catch {
           this.logger.warn(`Impossibile comunicare in locale con ${d.alias}`);

@@ -58,3 +58,4 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 # Configuration files
 device-config.json
 devices-info.json
+schedules.json

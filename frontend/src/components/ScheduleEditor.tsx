@@ -9,7 +9,7 @@ interface ScheduleEditorProps {
   onDelete: (id: string) => void;
 }
 
-const DAY_LABELS = ["Dom", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab"];
+const DAY_LABELS = ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"];
 
 function daysSummary(days: number[]): string {
   if (days.length === 7) return "Ogni giorno";
@@ -40,7 +40,13 @@ export default function ScheduleEditor({
 
   const handleAdd = () => {
     if (days.length === 0) return;
-    onAdd({ deviceId, targetState, time, days: [...days].sort(), enabled: true });
+    onAdd({
+      deviceId,
+      targetState,
+      time,
+      days: [...days].sort(),
+      enabled: true,
+    });
   };
 
   return (
@@ -59,7 +65,9 @@ export default function ScheduleEditor({
             <div
               key={s.id}
               className={`flex items-center justify-between gap-3 rounded-lg border bg-white px-3 py-2 ${
-                s.enabled ? "border-neutral-200" : "border-neutral-100 opacity-60"
+                s.enabled
+                  ? "border-neutral-200"
+                  : "border-neutral-100 opacity-60"
               }`}
             >
               <div className="min-w-0">
