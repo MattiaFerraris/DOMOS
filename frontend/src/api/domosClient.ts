@@ -67,7 +67,6 @@ async function fetchTapoDevices(): Promise<SmartDevice[]> {
 
   return data.data.map((d) => ({
     ...d,
-    // MAPPATURA CRUCIALE: Il backend manda 'device_on', React usa 'isOn'
     isOn: d.device_on || false,
     brightness: d.brightness || 100,
     color: d.color || "white",
