@@ -34,6 +34,71 @@ const toPercent = (raw: number): number =>
 const toRaw = (pct: number): number =>
   Math.round((Math.max(0, Math.min(100, pct)) / 100) * 254);
 
+// ── Conversioni colore → esadecimale per la UI ────────────────────
+const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
+const channelToHex = (v: number) =>
+  Math.round(clamp01(v) * 255)
+    .toString(16)
+    .padStart(2, '0');
+
+// CIE xy (color space delle Philips Hue) → hex sRGB saturato.
+function xyToHex(x: number, y: number): string {
+  if (y <= 0) return '#ffffff';
+  const Y = 1;
+  const X = (Y / y) * x;
+  const Z = (Y / y) * (1 - x - y);
+  let r = X * 3.2406 - Y * 1.5372 - Z * 0.4986;
+  let g = -X * 0.9689 + Y * 1.8758 + Z * 0.0415;
+  let b = X * 0.0557 - Y * 0.204 + Z * 1.057;
+  const gamma = (c: number) =>
+    c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055;
+  r = gamma(r);
+  g = gamma(g);
+  b = gamma(b);
+  // Normalizza sul canale più alto per restituire la tinta a piena saturazione.
+  const max = Math.max(r, g, b);
+  if (max > 1) {
+    r /= max;
+    g /= max;
+    b /= max;
+  }
+  return `#${channelToHex(r)}${channelToHex(g)}${channelToHex(b)}`;
+}
+
+// HSV Zigbee (hue 0-360, saturazione 0-100) → hex a piena luminosità.
+function hsvToHex(h: number, s: number): string {
+  const sf = s / 100;
+  const c = sf;
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = 1 - c;
+  const [r, g, b] =
+    h < 60
+      ? [c, x, 0]
+      : h < 120
+        ? [x, c, 0]
+        : h < 180
+          ? [0, c, x]
+          : h < 240
+            ? [0, x, c]
+            : h < 300
+              ? [x, 0, c]
+              : [c, 0, x];
+  return `#${channelToHex(r + m)}${channelToHex(g + m)}${channelToHex(b + m)}`;
+}
+
+// Estrae un colore hex dal campo "color" di zigbee2mqtt (hex | xy | hue/sat).
+function extractColor(data: any): string | undefined {
+  if (data?.color_mode === 'color_temp') return 'white';
+  const c = data?.color;
+  if (!c) return undefined;
+  if (typeof c.hex === 'string') return c.hex;
+  if (typeof c.x === 'number' && typeof c.y === 'number')
+    return xyToHex(c.x, c.y);
+  if (typeof c.hue === 'number')
+    return hsvToHex(c.hue, typeof c.saturation === 'number' ? c.saturation : 100);
+  return undefined;
+}
+
 @Injectable()
 export class MqttService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(MqttService.name);
@@ -148,7 +213,8 @@ export class MqttService implements OnModuleInit, OnModuleDestroy {
     if (typeof data.brightness === 'number')
       next.brightness = toPercent(data.brightness);
 
-    if (data.color?.hex) next.color = data.color.hex;
+    const color = extractColor(data);
+    if (color) next.color = color;
 
     this.deviceStates.set(friendlyName, next);
 

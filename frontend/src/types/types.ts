@@ -1,3 +1,6 @@
+// Backend che controlla il dispositivo (instrada i comandi sul controller giusto)
+export type DeviceSource = "tapo" | "zigbee";
+
 // Tipo generico multivendor per i dispositivi smart
 export interface SmartDevice {
   deviceId: string;
@@ -8,6 +11,7 @@ export interface SmartDevice {
   deviceType?: string; // Arriva dal cloud
   brightness?: number;
   color?: string;
+  source?: DeviceSource; // "tapo" (default) o "zigbee" (Philips Hue via MQTT)
 }
 
 // Aggiornamenti applicabili a una luce
@@ -56,12 +60,15 @@ export interface DeviceInfo {
 
 // Determina se un dispositivo è una luce LED a partire dal modello
 export function isLightDevice(device: SmartDevice): boolean {
+  // I dispositivi Zigbee gestiti (Philips Hue) sono luci.
+  if (device.source === "zigbee") return true;
   const model = device.deviceModel.toUpperCase();
   return model.includes("L") || model.includes("BULB");
 }
 
-// Determina la marca del dispositivo (Kasa vs Tapo)
-export function getBrand(device: SmartDevice): "KASA" | "TAPO" {
+// Determina la marca del dispositivo (Hue / Kasa / Tapo)
+export function getBrand(device: SmartDevice): "HUE" | "KASA" | "TAPO" {
+  if (device.source === "zigbee") return "HUE";
   const isKasa =
     device.deviceType?.toUpperCase().startsWith("IOT.") ||
     device.deviceModel.toUpperCase().startsWith("HS");

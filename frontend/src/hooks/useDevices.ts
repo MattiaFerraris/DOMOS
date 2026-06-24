@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import type { SmartDevice, LightUpdates } from "../types/types";
 import * as api from "../api/domosClient";
 
@@ -7,6 +7,13 @@ import * as api from "../api/domosClient";
 export function useDevices() {
   const [devices, setDevices] = useState<SmartDevice[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  // Riferimento sempre aggiornato ai device, per risalire al "source"
+  // (tapo/zigbee) dentro le callback senza ricrearle a ogni render.
+  const devicesRef = useRef<SmartDevice[]>(devices);
+  devicesRef.current = devices;
+  const sourceOf = (deviceId: string) =>
+    devicesRef.current.find((d) => d.deviceId === deviceId)?.source;
 
   const loadDevices = useCallback(async () => {
     setIsLoading(true);
@@ -34,7 +41,7 @@ export function useDevices() {
       );
 
       try {
-        await api.setPower(deviceId, state);
+        await api.setPower(deviceId, state, sourceOf(deviceId));
       } catch {
         // Rollback allo stato precedente
         setDevices((prev) =>
@@ -84,6 +91,7 @@ export function useDevices() {
           isTurningOn,
           newColor,
           newBrightness,
+          device.source,
         );
       } catch (error) {
         console.error("Errore aggiornamento luce:", error);

@@ -10,6 +10,8 @@ import { KasaService } from '../kasa/kasa.service';
 export interface TapoDeviceWithState extends TapoDevice {
   device_on: boolean;
   offline?: boolean;
+  brightness?: number; // solo luci LED
+  color?: string; // solo luci LED (hex o "white")
 }
 
 // DTO normalizzati comuni a Tapo e Kasa
@@ -179,21 +181,24 @@ export class TplinkCloudService {
         }
 
         try {
-          let isOn = false;
           // DELEGAZIONE AI LAVORATORI LOCALI
           const startTime: number = Date.now();
           if (protocol === 'kasa') {
-            isOn = await this.kasaService.getDeviceStatus(ip);
+            const isOn = await this.kasaService.getDeviceStatus(ip);
+            const endTime: number = Date.now();
+            this.logger.log(
+              `Stato ${d.alias} (kasa) → ${isOn} in ${endTime - startTime}ms`,
+            );
+            result.push({ ...d, device_on: isOn });
           } else {
-            isOn = await this.tapoService.getDeviceStatus(d.deviceId, ip);
+            // Tapo: leggiamo lo stato completo (acceso + luminosità + colore)
+            const state = await this.tapoService.getDeviceState(d.deviceId, ip);
+            const endTime: number = Date.now();
+            this.logger.log(
+              `Stato ${d.alias} (tapo) → ${state.device_on} in ${endTime - startTime}ms`,
+            );
+            result.push({ ...d, ...state });
           }
-          const endTime: number = Date.now();
-
-          this.logger.log(
-            `Stato ${d.alias} (${protocol}) → ${isOn} in ${endTime - startTime}ms`,
-          );
-
-          result.push({ ...d, device_on: isOn });
         } catch {
           this.logger.warn(`Impossibile comunicare in locale con ${d.alias}`);
           result.push({ ...d, device_on: false, offline: true });

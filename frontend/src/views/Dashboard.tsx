@@ -33,8 +33,11 @@ export default function Dashboard() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selectedDevice = devices.find((d) => d.deviceId === selectedId) ?? null;
 
-  // Energia + info del dispositivo aperto nel modal
-  const { energy, info, loading: detailsLoading } = useDeviceDetails(selectedId);
+  // Energia + info del dispositivo aperto nel modal (saltate per i device Zigbee)
+  const { energy, info, loading: detailsLoading } = useDeviceDetails(
+    selectedId,
+    selectedDevice?.source,
+  );
 
   return (
     <div className="min-h-screen bg-neutral-100 p-6 font-sans text-neutral-800 md:p-10">

@@ -1,20 +1,24 @@
 import { useState, useEffect } from "react";
-import type { DeviceEnergy, DeviceInfo } from "../types/types";
+import type { DeviceEnergy, DeviceInfo, DeviceSource } from "../types/types";
 import * as api from "../api/domosClient";
 
 /**
  * Carica energia e info di un dispositivo quando il modal è aperto.
  * L'energia viene ri-letta periodicamente (consumo in tempo reale).
+ * I device Zigbee (Philips Hue) non espongono questi dati: vengono saltati.
  */
-export function useDeviceDetails(deviceId: string | null) {
+export function useDeviceDetails(
+  deviceId: string | null,
+  source?: DeviceSource,
+) {
   const [energy, setEnergy] = useState<DeviceEnergy | null>(null);
   const [info, setInfo] = useState<DeviceInfo | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     /* eslint-disable react-hooks/set-state-in-effect */
-    if (!deviceId) {
-      // Modal chiuso: azzera i dati del dispositivo precedente
+    if (!deviceId || source === "zigbee") {
+      // Modal chiuso o device senza telemetria: azzera i dati precedenti
       setEnergy(null);
       setInfo(null);
       return;
@@ -47,7 +51,7 @@ export function useDeviceDetails(deviceId: string | null) {
       cancelled = true;
       clearInterval(poll);
     };
-  }, [deviceId]);
+  }, [deviceId, source]);
 
   return { energy, info, loading };
 }

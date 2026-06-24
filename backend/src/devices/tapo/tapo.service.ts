@@ -4,6 +4,33 @@ import { loginDeviceByIp } from 'tp-link-tapo-connect';
 // tipo della connessione restituita dalla libreria
 type DeviceConnection = Awaited<ReturnType<typeof loginDeviceByIp>>;
 
+// Converte HSV (hue 0-360, saturazione 0-100, valore 0-100) in esadecimale.
+// Usato per riportare il colore Tapo (hue/saturation) nel formato hex della UI.
+function hsvToHex(h: number, s: number, v = 100): string {
+  const sf = s / 100;
+  const vf = v / 100;
+  const c = vf * sf;
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = vf - c;
+  const [r, g, b] =
+    h < 60
+      ? [c, x, 0]
+      : h < 120
+        ? [x, c, 0]
+        : h < 180
+          ? [0, c, x]
+          : h < 240
+            ? [0, x, c]
+            : h < 300
+              ? [x, 0, c]
+              : [c, 0, x];
+  const toHex = (val: number) =>
+    Math.round((val + m) * 255)
+      .toString(16)
+      .padStart(2, '0');
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
 @Injectable()
 export class TapoService {
   private readonly logger = new Logger(TapoService.name);
@@ -45,6 +72,39 @@ export class TapoService {
       const device = await this.getTapoConnection(deviceId, ip);
       const info = await device.getDeviceInfo();
       return info.device_on;
+    } catch (error) {
+      this.activeSessions.delete(deviceId);
+      throw error;
+    }
+  }
+
+  /**
+   * Legge lo stato completo di una luce (acceso, luminosità, colore).
+   * Per le prese restituisce solo device_on (brightness/color = undefined).
+   * Usato dal Coordinatore per popolare la lista col vero stato del device.
+   */
+  async getDeviceState(
+    deviceId: string,
+    ip: string,
+  ): Promise<{ device_on: boolean; brightness?: number; color?: string }> {
+    try {
+      const device = await this.getTapoConnection(deviceId, ip);
+      // Il tipo della libreria non dichiara i campi colore: cast a record.
+      const info = (await device.getDeviceInfo()) as Record<string, unknown>;
+
+      const brightness =
+        typeof info.brightness === 'number' ? info.brightness : undefined;
+
+      // In modalità bianco/temperatura colore la saturazione è nulla.
+      let color: string | undefined;
+      if (typeof info.color_temp === 'number' && info.color_temp > 0) {
+        color = 'white';
+      } else if (typeof info.hue === 'number') {
+        const sat = typeof info.saturation === 'number' ? info.saturation : 100;
+        color = hsvToHex(info.hue, sat);
+      }
+
+      return { device_on: Boolean(info.device_on), brightness, color };
     } catch (error) {
       this.activeSessions.delete(deviceId);
       throw error;
