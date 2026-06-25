@@ -7,7 +7,7 @@ import type {
   DeviceInfo,
 } from "../types/types";
 
-const API_BASE = "http://localhost:3000/api";
+const API_BASE = import.meta.env.VITE_API_BASE;
 
 // Forma grezza di un dispositivo Tapo/Kasa come arriva dal backend
 interface RawDevice {
