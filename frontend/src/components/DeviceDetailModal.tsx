@@ -201,8 +201,8 @@ export default function DeviceDetailModal({
             />
           ) : null}
 
-          {/* Consumo energetico (solo Tapo/Kasa) */}
-          {!device.offline && supportsTelemetry ? (
+          {/* Consumo energetico: solo prese smart, non luci/strisce LED */}
+          {!device.offline && !isLight ? (
             <EnergyPanel energy={energy} loading={detailsLoading} />
           ) : null}
 

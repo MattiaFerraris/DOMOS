@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useDevices } from "../hooks/useDevices";
 import { useScheduler } from "../hooks/useScheduler";
-import { useDeviceDetails } from "../hooks/useDeviceDetails";
+import { useDeviceInfo } from "../hooks/useDeviceInfo";
+import { useEnergy } from "../hooks/useEnergy";
+import { isLightDevice } from "../types/types";
 import Header from "../components/Header";
 import DeviceCard from "../components/DeviceCard";
 import DeviceDetailModal from "../components/DeviceDetailModal";
@@ -33,11 +35,12 @@ export default function Dashboard() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selectedDevice = devices.find((d) => d.deviceId === selectedId) ?? null;
 
-  // Energia + info del dispositivo aperto nel modal (saltate per i device Zigbee)
-  const { energy, info, loading: detailsLoading } = useDeviceDetails(
-    selectedId,
-    selectedDevice?.source,
-  );
+  // Info di sistema/rete del dispositivo aperto (saltate per i device Zigbee)
+  const { info } = useDeviceInfo(selectedId, selectedDevice?.source);
+
+  // Consumo energetico: ha senso solo per le prese smart, non per le luci/strisce LED
+  const isPlug = selectedDevice ? !isLightDevice(selectedDevice) : false;
+  const { energy, loading: detailsLoading } = useEnergy(selectedId, isPlug);
 
   return (
     <div className="min-h-screen bg-neutral-100 p-6 font-sans text-neutral-800 md:p-10">

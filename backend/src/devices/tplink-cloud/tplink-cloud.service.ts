@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { cloudLogin, TapoDevice } from 'tp-link-tapo-connect';
+import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -39,8 +40,8 @@ const INFO_PATH = path.join(process.cwd(), 'devices-info.json');
 export class TplinkCloudService {
   private readonly logger = new Logger(TplinkCloudService.name);
 
-  readonly email = 'mailDispositiviSmart@gmail.com';
-  readonly password = 'hapjin-6mIpky-puhnux';
+  private readonly email: string;
+  private readonly password: string;
 
   private cloudApi: Awaited<ReturnType<typeof cloudLogin>> | null = null;
   private cloudApiExpiry = 0;
@@ -58,7 +59,11 @@ export class TplinkCloudService {
   constructor(
     private readonly tapoService: TapoService,
     private readonly kasaService: KasaService,
-  ) {}
+    private readonly configService: ConfigService,
+  ) {
+    this.email = this.configService.get<string>('TPLINK_EMAIL', '');
+    this.password = this.configService.get<string>('TPLINK_PASSWORD', '');
+  }
 
   // ── Helper ──────────────────────────────────────────────────────
   private loadIpMap(): Record<string, string> {

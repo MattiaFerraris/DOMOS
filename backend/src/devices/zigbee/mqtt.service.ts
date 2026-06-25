@@ -4,10 +4,8 @@ import {
   OnModuleInit,
   OnModuleDestroy,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import * as mqtt from 'mqtt';
-
-const BROKER_URL = process.env.MQTT_BROKER_URL ?? 'mqtt://localhost:1883';
-const BASE_TOPIC = process.env.ZIGBEE2MQTT_BASE_TOPIC ?? 'zigbee2mqtt';
 
 export interface ZigbeeDeviceState {
   state?: boolean;
@@ -95,13 +93,31 @@ function extractColor(data: any): string | undefined {
   if (typeof c.x === 'number' && typeof c.y === 'number')
     return xyToHex(c.x, c.y);
   if (typeof c.hue === 'number')
-    return hsvToHex(c.hue, typeof c.saturation === 'number' ? c.saturation : 100);
+    return hsvToHex(
+      c.hue,
+      typeof c.saturation === 'number' ? c.saturation : 100,
+    );
   return undefined;
 }
 
 @Injectable()
 export class MqttService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(MqttService.name);
+
+  private readonly username: string;
+  private readonly password: string;
+  private readonly brokerUrl: string;
+  private readonly baseTopic: string;
+
+  constructor(private readonly configService: ConfigService) {
+    this.username = this.configService.get<string>('MQTT_USERNAME', '');
+    this.password = this.configService.get<string>('MQTT_PASSWORD', '');
+    this.brokerUrl = this.configService.get<string>('MQTT_BROKER_URL', '');
+    this.baseTopic = this.configService.get<string>(
+      'ZIGBEE2MQTT_BASE_TOPIC',
+      '',
+    );
+  }
 
   private client: mqtt.MqttClient | null = null;
 
@@ -121,17 +137,16 @@ export class MqttService implements OnModuleInit, OnModuleDestroy {
   }
 
   private connect(): void {
-    this.logger.log(`Connessione al broker MQTT ${BROKER_URL}...`);
-    this.client = mqtt.connect(BROKER_URL, {
+    this.logger.log(`Connessione al broker MQTT ${this.brokerUrl}...`);
+    this.client = mqtt.connect(this.brokerUrl, {
       reconnectPeriod: 5000,
-      // username/password: aggiungili qui se il broker li richiede
-      username: process.env.MQTT_USERNAME,
-      password: process.env.MQTT_PASSWORD,
+      username: this.username,
+      password: this.password,
     });
 
     this.client.on('connect', () => {
       this.logger.log('Broker MQTT connesso');
-      this.client!.subscribe(`${BASE_TOPIC}/#`, (err) => {
+      this.client!.subscribe(`${this.baseTopic}/#`, (err) => {
         if (err) this.logger.error(`Subscribe fallita: ${err.message}`);
       });
     });
@@ -149,7 +164,7 @@ export class MqttService implements OnModuleInit, OnModuleDestroy {
   }
 
   private handleMessage(topic: string, payload: Buffer): void {
-    const sub = topic.slice(BASE_TOPIC.length + 1);
+    const sub = topic.slice(this.baseTopic.length + 1);
 
     if (sub.endsWith('/set') || sub.endsWith('/get')) return;
 
@@ -246,7 +261,7 @@ export class MqttService implements OnModuleInit, OnModuleDestroy {
       this.logger.error('Comando non inviato: broker MQTT non connesso');
       return false;
     }
-    const topic = `${BASE_TOPIC}/${friendlyName}/set`;
+    const topic = `${this.baseTopic}/${friendlyName}/set`;
     this.client.publish(topic, JSON.stringify(payload));
     this.logger.log(`→ ${topic} ${JSON.stringify(payload)}`);
     return true;

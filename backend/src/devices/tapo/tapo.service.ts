@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { loginDeviceByIp } from 'tp-link-tapo-connect';
+import { ConfigService } from '@nestjs/config';
 
 // tipo della connessione restituita dalla libreria
 type DeviceConnection = Awaited<ReturnType<typeof loginDeviceByIp>>;
@@ -35,9 +36,13 @@ function hsvToHex(h: number, s: number, v = 100): string {
 export class TapoService {
   private readonly logger = new Logger(TapoService.name);
 
-  // Le credenziali locali servono ancora per il protocollo KLAP
-  readonly email = 'mailDispositiviSmart@gmail.com';
-  readonly password = 'hapjin-6mIpky-puhnux';
+  private readonly email: string;
+  private readonly password: string;
+
+  constructor(private readonly configService: ConfigService) {
+    this.email = this.configService.get<string>('TPLINK_EMAIL', '');
+    this.password = this.configService.get<string>('TPLINK_PASSWORD', '');
+  }
 
   // CACHE sessione
   private activeSessions = new Map<string, DeviceConnection>();
