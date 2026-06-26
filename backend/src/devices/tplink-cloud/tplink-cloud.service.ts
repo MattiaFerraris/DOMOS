@@ -27,7 +27,6 @@ export interface DeviceEnergy {
 export interface DeviceInfo {
   rssi?: number;
   signal?: number;
-  onTimeSec?: number;
   overheated?: boolean;
   firmware?: string;
   ssid?: string;
@@ -331,7 +330,6 @@ export class TplinkCloudService {
         const s = await this.kasaService.getInfo(resolved.ip);
         return {
           rssi: s.rssi,
-          onTimeSec: s.on_time,
           firmware: s.sw_ver,
         };
       }
@@ -340,23 +338,12 @@ export class TplinkCloudService {
       return {
         rssi: i.rssi,
         signal: i.signal_level,
-        onTimeSec: i.on_time,
         overheated: i.overheated,
         firmware: i.fw_ver,
-        ssid: this.decodeBase64(i.ssid),
+        ssid: i.ssid,
       };
     } catch {
       return {};
-    }
-  }
-
-  // Tapo codifica alcuni campi (ssid) in base64
-  private decodeBase64(value?: string): string | undefined {
-    if (!value) return undefined;
-    try {
-      return Buffer.from(value, 'base64').toString('utf-8');
-    } catch {
-      return value;
     }
   }
 }

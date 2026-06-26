@@ -4,17 +4,6 @@ interface DeviceInfoPanelProps {
   info: DeviceInfo | null;
 }
 
-// Formatta una durata in secondi in "Xg Yh Zm"
-function formatUptime(sec?: number): string {
-  if (sec == null) return "—";
-  const d = Math.floor(sec / 86400);
-  const h = Math.floor((sec % 86400) / 3600);
-  const m = Math.floor((sec % 3600) / 60);
-  if (d > 0) return `${d}g ${h}h`;
-  if (h > 0) return `${h}h ${m}m`;
-  return `${m}m`;
-}
-
 // Livello segnale 0-4: usa signal_level (Tapo) o lo deriva dall'rssi in dBm
 function signalBars(info: DeviceInfo): number {
   if (info.signal != null) return Math.max(0, Math.min(4, info.signal));
@@ -84,8 +73,6 @@ export default function DeviceInfoPanel({ info }: DeviceInfoPanelProps) {
           <Row label="Rete">{info.ssid}</Row>
         </>
       )}
-      <div className="border-t border-neutral-100" />
-      <Row label="Acceso da">{formatUptime(info.onTimeSec)}</Row>
       <div className="border-t border-neutral-100" />
       <Row label="Temperatura">
         {info.overheated ? (

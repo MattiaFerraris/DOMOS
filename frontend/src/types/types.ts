@@ -52,7 +52,6 @@ export interface DeviceEnergy {
 export interface DeviceInfo {
   rssi?: number;
   signal?: number;
-  onTimeSec?: number;
   overheated?: boolean;
   firmware?: string;
   ssid?: string;
