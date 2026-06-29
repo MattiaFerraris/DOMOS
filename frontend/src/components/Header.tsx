@@ -7,9 +7,7 @@ export default function Header({ deviceCount, onRefresh }: HeaderProps) {
   return (
     <header className="mb-10 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
       <div className="flex items-center gap-4">
-        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 text-2xl font-black text-white shadow-lg shadow-indigo-500/30">
-          D
-        </div>
+        <img src="/domos-icon.svg" alt="DOMOS Logo" className="h-12 w-12" />
         <div>
           <h1 className="text-4xl font-extrabold tracking-tight text-neutral-900">
             DOMOS
@@ -24,11 +22,6 @@ export default function Header({ deviceCount, onRefresh }: HeaderProps) {
         <span className="rounded-full border border-neutral-200 bg-white px-4 py-2 text-sm font-semibold text-neutral-600 shadow-sm">
           {deviceCount} {deviceCount === 1 ? "dispositivo" : "dispositivi"}
         </span>
-
-        <div className="flex items-center gap-2 rounded-full border border-green-200 bg-green-50 px-4 py-2 text-sm font-bold text-green-700 shadow-sm">
-          <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-green-500"></span>
-          Backend Connesso
-        </div>
 
         <button
           onClick={onRefresh}

@@ -163,6 +163,7 @@ export class MqttService implements OnModuleInit, OnModuleDestroy {
     );
   }
 
+  // lettura messaggi da zig2mqtt
   private handleMessage(topic: string, payload: Buffer): void {
     const sub = topic.slice(this.baseTopic.length + 1);
 

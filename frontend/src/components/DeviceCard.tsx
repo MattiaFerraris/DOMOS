@@ -128,8 +128,7 @@ export default function DeviceCard({
           <span
             className={`font-semibold ${isPoweredOn ? "text-green-600" : "text-neutral-800"}`}
           >
-            {isPoweredOn ? "Accesa" : "Spenta"}
-            {device.offline ? " (Offline)" : ""}
+            {device.offline ? "Offline" : isPoweredOn ? "Accesa" : "Spenta"}
           </span>
         </span>
       </div>
