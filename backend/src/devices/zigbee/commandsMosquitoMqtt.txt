@@ -1,0 +1,4 @@
+brew services start mosquitto
+cd /Users/mattia/zigbee2mqtt
+npm ci
+npm start 

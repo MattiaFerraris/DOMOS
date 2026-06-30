@@ -97,6 +97,34 @@ export class TplinkCloudService {
     }
   }
 
+  // Timeout massimo (ms) per ogni interrogazione locale di un dispositivo.
+  // Serve a non restare appesi quando un IP in device-config.json è vecchio:
+  // la libreria Tapo, dopo il fallimento KLAP, cade in login "legacy" senza
+  // timeout proprio e bloccherebbe l'intera lista. Vedi withTimeout().
+  private static readonly DEVICE_TIMEOUT_MS = 4000;
+
+  // Avvolge una promise con un timeout: se non si risolve entro `ms`, rigetta.
+  // NB: la richiesta sottostante non viene annullata, ma il Coordinatore non
+  // resta più bloccato e marca il dispositivo come offline.
+  private async withTimeout<T>(
+    promise: Promise<T>,
+    ms: number,
+    label: string,
+  ): Promise<T> {
+    let timer: NodeJS.Timeout;
+    const timeout = new Promise<never>((_, reject) => {
+      timer = setTimeout(
+        () => reject(new Error(`Timeout (${ms}ms) comunicando con ${label}`)),
+        ms,
+      );
+    });
+    try {
+      return await Promise.race([promise, timeout]);
+    } finally {
+      clearTimeout(timer!);
+    }
+  }
+
   private getDeviceProtocol(device: TapoDevice): 'tapo' | 'kasa' {
     if (
       device.deviceType &&
@@ -170,44 +198,56 @@ export class TplinkCloudService {
     this.getDevicesListPromise = (async () => {
       const devices = await this.getCachedDevices();
       const ipMap = this.loadIpMap();
-      const result: TapoDeviceWithState[] = [];
 
-      for (const d of devices) {
-        const ip = ipMap[d.deviceId];
-        const protocol = this.getDeviceProtocol(d);
+      // Interroghiamo tutti i dispositivi in parallelo: così la lista torna nel
+      // tempo del device più lento (max DEVICE_TIMEOUT_MS) e non nella somma.
+      // Promise.all preserva l'ordine dell'array di partenza.
+      const result = await Promise.all(
+        devices.map(async (d): Promise<TapoDeviceWithState> => {
+          const ip = ipMap[d.deviceId];
+          const protocol = this.getDeviceProtocol(d);
 
-        if (!ip) {
-          this.logger.warn(
-            `IP mancante per ${d.alias} — aggiungilo a device-config.json`,
-          );
-          result.push({ ...d, device_on: false, offline: true });
-          continue;
-        }
-
-        try {
-          // DELEGAZIONE AI LAVORATORI LOCALI
-          const startTime: number = Date.now();
-          if (protocol === 'kasa') {
-            const isOn = await this.kasaService.getDeviceStatus(ip);
-            const endTime: number = Date.now();
-            this.logger.log(
-              `Stato ${d.alias} (kasa) → ${isOn} in ${endTime - startTime}ms`,
+          if (!ip) {
+            this.logger.warn(
+              `IP mancante per ${d.alias} — aggiungilo a device-config.json`,
             );
-            result.push({ ...d, device_on: isOn });
-          } else {
-            // Tapo: leggiamo lo stato completo (acceso + luminosità + colore)
-            const state = await this.tapoService.getDeviceState(d.deviceId, ip);
-            const endTime: number = Date.now();
-            this.logger.log(
-              `Stato ${d.alias} (tapo) → ${state.device_on} in ${endTime - startTime}ms`,
-            );
-            result.push({ ...d, ...state });
+            return { ...d, device_on: false, offline: true };
           }
-        } catch {
-          this.logger.warn(`Impossibile comunicare in locale con ${d.alias}`);
-          result.push({ ...d, device_on: false, offline: true });
-        }
-      }
+
+          try {
+            // DELEGAZIONE AI LAVORATORI LOCALI (con timeout per IP morti)
+            const startTime: number = Date.now();
+            if (protocol === 'kasa') {
+              const isOn = await this.withTimeout(
+                this.kasaService.getDeviceStatus(ip),
+                TplinkCloudService.DEVICE_TIMEOUT_MS,
+                `${d.alias} (kasa)`,
+              );
+              this.logger.log(
+                `Stato ${d.alias} (kasa) → ${isOn} in ${Date.now() - startTime}ms`,
+              );
+              return { ...d, device_on: isOn };
+            } else {
+              // Tapo: leggiamo lo stato completo (acceso + luminosità + colore)
+              const state = await this.withTimeout(
+                this.tapoService.getDeviceState(d.deviceId, ip),
+                TplinkCloudService.DEVICE_TIMEOUT_MS,
+                `${d.alias} (tapo)`,
+              );
+              this.logger.log(
+                `Stato ${d.alias} (tapo) → ${state.device_on} in ${Date.now() - startTime}ms`,
+              );
+              return { ...d, ...state };
+            }
+          } catch (error) {
+            this.logger.warn(
+              `Impossibile comunicare in locale con ${d.alias}: ${(error as Error).message}`,
+            );
+            return { ...d, device_on: false, offline: true };
+          }
+        }),
+      );
+
       return result;
     })();
 
