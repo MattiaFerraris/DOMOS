@@ -215,6 +215,14 @@ export class MqttService implements OnModuleInit, OnModuleDestroy {
     }
     this.bridgeDevices = next;
     this.logger.log(`Catalogo zigbee2mqtt aggiornato (${next.size} device)`);
+
+    // zigbee2mqtt non ripubblica lo stato dei device all'avvio (i messaggi di
+    // stato non sono retained): senza una richiesta esplicita resteremmo con
+    // stato sconosciuto finché il device non cambia da solo. Chiediamo quindi
+    // lo stato corrente di ogni device che non conosciamo ancora.
+    for (const friendlyName of next.keys()) {
+      if (!this.deviceStates.has(friendlyName)) this.requestState(friendlyName);
+    }
   }
 
   private ingestDeviceState(friendlyName: string, data: any): void {
@@ -251,6 +259,19 @@ export class MqttService implements OnModuleInit, OnModuleDestroy {
 
   getState(friendlyName: string): ZigbeeDeviceState {
     return this.deviceStates.get(friendlyName) ?? {};
+  }
+
+  /**
+   * Chiede a zigbee2mqtt lo stato corrente di un device pubblicando su
+   * `.../get`. zigbee2mqtt risponde con un normale messaggio di stato sul
+   * topic del device, assorbito da {@link ingestDeviceState}. Utile all'avvio,
+   * quando lo stato non è ancora noto perché i messaggi non sono retained.
+   */
+  private requestState(friendlyName: string): void {
+    if (!this.client?.connected) return;
+    const topic = `${this.baseTopic}/${friendlyName}/get`;
+    this.client.publish(topic, JSON.stringify({ state: '' }));
+    this.logger.log(`→ ${topic} (richiesta stato)`);
   }
 
   /** Pubblica un payload sul topic .../set del dispositivo. */

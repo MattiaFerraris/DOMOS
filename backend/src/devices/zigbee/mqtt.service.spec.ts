@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ConfigService } from '@nestjs/config';
 import * as mqtt from 'mqtt';
 import { MqttService } from './mqtt.service';
 
@@ -49,8 +50,23 @@ describe('MqttService', () => {
     client = createFakeClient();
     (mqtt.connect as jest.Mock).mockReturnValue(client);
 
+    // ConfigService finto: fornisce il base_topic atteso dai test e lascia
+    // cadere il resto sui default, senza dover caricare un vero ConfigModule.
+    const config: Record<string, string> = {
+      ZIGBEE2MQTT_BASE_TOPIC: BASE_TOPIC,
+      MQTT_BROKER_URL: 'mqtt://localhost:1883',
+    };
+
     const module: TestingModule = await Test.createTestingModule({
-      providers: [MqttService],
+      providers: [
+        MqttService,
+        {
+          provide: ConfigService,
+          useValue: {
+            get: (key: string, def?: unknown) => config[key] ?? def,
+          },
+        },
+      ],
     }).compile();
 
     service = module.get<MqttService>(MqttService);
@@ -78,6 +94,28 @@ describe('MqttService', () => {
       expect(devices[0].friendlyName).toBe('Hue Go');
       expect(devices[0].vendor).toBe('Philips');
       expect(devices[0].offline).toBe(false);
+    });
+
+    it('richiede lo stato iniziale (.../get) dei device non ancora noti', () => {
+      client.emitMessage(`${BASE_TOPIC}/bridge/devices`, [
+        { type: 'Router', ieee_address: '0x01', friendly_name: 'Hue Go' },
+      ]);
+      expect(client.publish).toHaveBeenCalledWith(
+        `${BASE_TOPIC}/Hue Go/get`,
+        JSON.stringify({ state: '' }),
+      );
+    });
+
+    it('non ri-richiede lo stato se già noto', () => {
+      client.emitMessage(`${BASE_TOPIC}/Hue Go`, { state: 'ON' });
+      client.publish.mockClear();
+      client.emitMessage(`${BASE_TOPIC}/bridge/devices`, [
+        { type: 'Router', ieee_address: '0x01', friendly_name: 'Hue Go' },
+      ]);
+      expect(client.publish).not.toHaveBeenCalledWith(
+        `${BASE_TOPIC}/Hue Go/get`,
+        expect.anything(),
+      );
     });
 
     it('segna i device offline se il coordinatore è offline', () => {

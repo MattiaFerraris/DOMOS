@@ -194,9 +194,7 @@ export class SchedulerService implements OnModuleInit, OnModuleDestroy {
     return this.store.schedules;
   }
 
-  addSchedule(
-    input: Omit<RecurringSchedule, 'id'>,
-  ): RecurringSchedule {
+  addSchedule(input: Omit<RecurringSchedule, 'id'>): RecurringSchedule {
     const schedule: RecurringSchedule = { id: randomUUID(), ...input };
     this.store.schedules.push(schedule);
     this.saveStore();

@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ConfigService } from '@nestjs/config';
 import { loginDeviceByIp } from 'tp-link-tapo-connect';
 import { TapoService } from './tapo.service';
 
@@ -22,7 +23,13 @@ describe('TapoService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [TapoService],
+      providers: [
+        TapoService,
+        {
+          provide: ConfigService,
+          useValue: { get: (_key: string, def?: unknown) => def },
+        },
+      ],
     }).compile();
     service = module.get<TapoService>(TapoService);
   });
@@ -32,7 +39,12 @@ describe('TapoService', () => {
   describe('getDeviceState', () => {
     it('legge accensione e luminosità di una luce a colori', async () => {
       (loginDeviceByIp as jest.Mock).mockResolvedValue(
-        fakeDevice({ device_on: true, brightness: 80, hue: 0, saturation: 100 }),
+        fakeDevice({
+          device_on: true,
+          brightness: 80,
+          hue: 0,
+          saturation: 100,
+        }),
       );
 
       const state = await service.getDeviceState('led-1', IP);
@@ -54,7 +66,12 @@ describe('TapoService', () => {
 
     it('tratta la modalità temperatura colore come "white"', async () => {
       (loginDeviceByIp as jest.Mock).mockResolvedValue(
-        fakeDevice({ device_on: true, brightness: 50, color_temp: 4000, hue: 0 }),
+        fakeDevice({
+          device_on: true,
+          brightness: 50,
+          color_temp: 4000,
+          hue: 0,
+        }),
       );
 
       expect((await service.getDeviceState('led-1', IP)).color).toBe('white');
