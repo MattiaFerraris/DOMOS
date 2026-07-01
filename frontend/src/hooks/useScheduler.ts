@@ -6,19 +6,17 @@ type TimerMap = Record<string, OneShotTimer>;
 
 /**
  * Gestisce timer one-shot e schedulazioni ricorrenti lato server.
- * Sostituisce il vecchio timer basato su localStorage: ora la fonte di
- * verità è il backend, che pianifica ed esegue i comandi.
  */
 export function useScheduler() {
   const [timers, setTimers] = useState<TimerMap>({});
   const [schedules, setSchedules] = useState<RecurringSchedule[]>([]);
-  // Tick di 1s per il countdown dei timer (calcolato dal fireAt del server)
   const [now, setNow] = useState(() => Date.now());
 
   const reloadTimers = useCallback(async () => {
     const list = await api.listTimers();
     const map: TimerMap = {};
     for (const t of list) map[t.deviceId] = t;
+    setNow(Date.now());
     setTimers(map);
   }, []);
 
