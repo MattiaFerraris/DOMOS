@@ -1,0 +1,56 @@
+{
+  "_meta": {
+    "descrizione": "Mappatura tasti telecomando Nenko Interactive -> frame IEEE 802.15.4 da ritrasmettere. Byte letti direttamente dal pcap 2026-06-02 (grezzi, verificati su Wireshark).",
+    "radio": {
+      "canale": 11,
+      "panId": "0x0005",
+      "srcAddr": "0x3134",
+      "dstAddr": "0xFFFF (broadcast)",
+      "sicurezza": "nessuna"
+    },
+    "formato_invio": "Il campo 'frame' e' il MAC frame completo (24 byte: header 11 + payload 13), cioe' cio' che il NenkoService invia via seriale al firmware nRF. Il PHR e i 2 byte di FCS li aggiunge il firmware/hardware: NON includerli.",
+    "struttura_payload": "byte0=0x4E magic ('N') | 1-2=FFFF | 3-5=opcode | 6-8=RGB o parametri | 9-10=FFFF(colore)/0000(effetto) | 11-12=2A0D terminatore"
+  },
+  "tasti": {
+    "rosso": {
+      "label": "Rosso",
+      "tipo": "colore",
+      "rgb": "#FF0000",
+      "payload": "4effff000100ff0000ffff2a0d",
+      "frame": "0188010500ffff050034314effff000100ff0000ffff2a0d"
+    },
+    "verde": {
+      "label": "Verde",
+      "tipo": "colore",
+      "rgb": "#00FF00",
+      "payload": "4effff00010000ff00ffff2a0d",
+      "frame": "0188010500ffff050034314effff00010000ff00ffff2a0d"
+    },
+    "blu": {
+      "label": "Blu",
+      "tipo": "colore",
+      "rgb": "#0000FF",
+      "payload": "4effff0001000000ffffff2a0d",
+      "frame": "0188010500ffff050034314effff0001000000ffffff2a0d"
+    },
+    "giallo": {
+      "label": "Giallo",
+      "tipo": "colore",
+      "rgb": "#FFFF00",
+      "payload": "4effff000100ffff00ffff2a0d",
+      "frame": "0188010500ffff050034314effff000100ffff00ffff2a0d"
+    },
+    "arcobaleno": {
+      "label": "Arcobaleno",
+      "tipo": "effetto",
+      "payload": "4effff00020000000000002a0d",
+      "frame": "0188010500ffff050034314effff00020000000000002a0d"
+    },
+    "bolle": {
+      "label": "Bolle",
+      "tipo": "effetto",
+      "payload": "4effff00030001000000002a0d",
+      "frame": "0188010500ffff050034314effff00030001000000002a0d"
+    }
+  }
+}

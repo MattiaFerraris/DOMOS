@@ -5,6 +5,7 @@ import { TapoModule } from './tapo/tapo.module';
 import { KasaModule } from './kasa/kasa.module';
 import { TplinkCloudModule } from './tplink-cloud/tplink-cloud.module';
 import { ZigbeeModule } from './zigbee/zigbee.module';
+import { NenkoModule } from './nenko/nenko.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { ZigbeeModule } from './zigbee/zigbee.module';
     KasaModule,
     TplinkCloudModule,
     ZigbeeModule,
+    NenkoModule,
   ],
   controllers: [],
   providers: [],
