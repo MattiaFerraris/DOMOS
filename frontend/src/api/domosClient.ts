@@ -5,6 +5,8 @@ import type {
   RecurringSchedule,
   DeviceEnergy,
   DeviceInfo,
+  NenkoPreset,
+  NenkoState,
 } from "../types/types";
 
 const API_BASE = import.meta.env.VITE_API_BASE;
@@ -151,6 +153,39 @@ export async function setLight(
     body: JSON.stringify(body),
   });
   if (!response.ok) throw new Error("Network error");
+}
+
+// ── Nenko (luce sensoriale via nRF52840) ──────────────────────────
+// La lista preset arriva dal file nenko-buttons.json lato backend: è
+// disponibile anche se il dongle non è connesso (in quel caso l'invio fallirà).
+export async function fetchNenkoPresets(): Promise<NenkoPreset[]> {
+  try {
+    const res = await fetch(`${API_BASE}/nenko/presets`);
+    const data = await res.json();
+    return data.status === "OK" ? data.data : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function fetchNenkoState(): Promise<NenkoState> {
+  try {
+    const res = await fetch(`${API_BASE}/nenko/state`);
+    const data = await res.json();
+    return data.status === "OK" ? data.data : {};
+  } catch {
+    return {};
+  }
+}
+
+// Invia un colore/effetto di preset (ritrasmette il frame catturato).
+export async function sendNenkoPreset(name: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/nenko/preset`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name }),
+  });
+  if (!res.ok) throw new Error("Network error");
 }
 
 // ── Energia & Info ────────────────────────────────────────────────

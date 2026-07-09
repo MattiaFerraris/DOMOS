@@ -14,6 +14,18 @@ export interface SmartDevice {
   source?: DeviceSource; // "tapo" (default) o "zigbee" (Philips Hue via MQTT)
 }
 
+// ── Nenko (luce sensoriale via dongle nRF52840 → 802.15.4) ────────
+export interface NenkoPreset {
+  name: string; // id interno (chiave in nenko-buttons.json)
+  label: string; // etichetta mostrata sul pulsante
+  tipo: string; // "colore" | "effetto"
+  rgb?: string; // hex "#rrggbb" (solo per i colori)
+}
+
+export interface NenkoState {
+  color?: string; // nome dell'ultimo preset inviato
+}
+
 // Aggiornamenti applicabili a una luce
 export interface LightUpdates {
   state?: boolean;

@@ -3,9 +3,11 @@ import { useDevices } from "../hooks/useDevices";
 import { useScheduler } from "../hooks/useScheduler";
 import { useDeviceInfo } from "../hooks/useDeviceInfo";
 import { useEnergy } from "../hooks/useEnergy";
+import { useNenko } from "../hooks/useNenko";
 import { isLightDevice } from "../types/types";
 import Header from "../components/Header";
 import DeviceCard from "../components/DeviceCard";
+import NenkoCard from "../components/NenkoCard";
 import DeviceDetailModal from "../components/DeviceDetailModal";
 
 export default function Dashboard() {
@@ -31,6 +33,9 @@ export default function Dashboard() {
     deleteSchedule,
   } = useScheduler();
 
+  // Luce Nenko (preset colore/effetto via dongle nRF52840)
+  const nenko = useNenko();
+
   // Dispositivo selezionato per il modal di dettaglio
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selectedDevice = devices.find((d) => d.deviceId === selectedId) ?? null;
@@ -52,7 +57,7 @@ export default function Dashboard() {
             <span className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-neutral-200 border-t-indigo-500"></span>
             <p className="mt-4 font-medium">Lettura stato dispositivi in corso...</p>
           </div>
-        ) : devices.length === 0 ? (
+        ) : devices.length === 0 && nenko.presets.length === 0 ? (
           <div className="py-20 text-center text-neutral-500">
             <p className="font-medium">Nessun dispositivo trovato.</p>
           </div>
@@ -72,6 +77,12 @@ export default function Dashboard() {
                 onOpenDetail={setSelectedId}
               />
             ))}
+            <NenkoCard
+              presets={nenko.presets}
+              active={nenko.active}
+              error={nenko.error}
+              onSend={nenko.sendPreset}
+            />
           </main>
         )}
       </div>
