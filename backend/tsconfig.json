@@ -16,7 +16,7 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "types": ["node", "jest"],
-    "incremental": true,
+    "incremental": false,
     "skipLibCheck": true,
     "strictNullChecks": true,
     "forceConsistentCasingInFileNames": true,
