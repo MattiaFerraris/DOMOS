@@ -156,7 +156,7 @@ export class NenkoService implements OnModuleInit, OnModuleDestroy {
     return result;
   }
 
-  /** Ritrasmette un frame MAC grezzo (hex, senza FCS), ripetuto `repeat` volte. */
+  /** Ritrasmette un frame MAC grezzo (hex, senza FCS) */
   private async transmit(hexFrame: string): Promise<boolean> {
     let ok = true;
 
