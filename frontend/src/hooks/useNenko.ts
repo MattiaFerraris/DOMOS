@@ -23,17 +23,20 @@ export function useNenko() {
     void load();
   }, [load]);
 
-  const sendPreset = useCallback(async (name: string) => {
-    const prev = active;
-    setActive(name); // evidenzia subito il pulsante premuto
-    setError(null);
-    try {
-      await api.sendNenkoPreset(name);
-    } catch {
-      setActive(prev); // rollback dell'evidenziazione
-      setError(name);
-    }
-  }, [active]);
+  const sendPreset = useCallback(
+    async (name: string) => {
+      const prev = active;
+      setActive(name);
+      setError(null);
+      try {
+        await api.sendNenkoPreset(name);
+      } catch {
+        setActive(prev); // rollback
+        setError(name);
+      }
+    },
+    [active],
+  );
 
   return { presets, active, error, sendPreset, reload: load };
 }

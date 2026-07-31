@@ -3,8 +3,6 @@ import { cloudLogin, TapoDevice } from 'tp-link-tapo-connect';
 import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs';
 import * as path from 'path';
-
-// Assicurati che i percorsi siano corretti in base alla tua cartella
 import { TapoService } from '../tapo/tapo.service';
 import { KasaService } from '../kasa/kasa.service';
 
@@ -54,7 +52,6 @@ export class TplinkCloudService {
   private cachedDevicesPromise: Promise<TapoDevice[]> | null = null;
   private getDevicesListPromise: Promise<TapoDeviceWithState[]> | null = null;
 
-  // Iniezione dei due "Lavoratori"
   constructor(
     private readonly tapoService: TapoService,
     private readonly kasaService: KasaService,
@@ -97,15 +94,14 @@ export class TplinkCloudService {
     }
   }
 
-  // Timeout massimo (ms) per ogni interrogazione locale di un dispositivo.
+  // Timeout massimo per ogni interrogazione locale di un dispositivo.
   // Serve a non restare appesi quando un IP in device-config.json è vecchio:
   // la libreria Tapo, dopo il fallimento KLAP, cade in login "legacy" senza
   // timeout proprio e bloccherebbe l'intera lista. Vedi withTimeout().
   private static readonly DEVICE_TIMEOUT_MS = 4000;
 
   // Avvolge una promise con un timeout: se non si risolve entro `ms`, rigetta.
-  // NB: la richiesta sottostante non viene annullata, ma il Coordinatore non
-  // resta più bloccato e marca il dispositivo come offline.
+  // la richiesta non viene annullata, ma il Coordinatore non resta più bloccato e marca il dispositivo come offline.
   private async withTimeout<T>(
     promise: Promise<T>,
     ms: number,
@@ -199,9 +195,7 @@ export class TplinkCloudService {
       const devices = await this.getCachedDevices();
       const ipMap = this.loadIpMap();
 
-      // Interroghiamo tutti i dispositivi in parallelo: così la lista torna nel
-      // tempo del device più lento (max DEVICE_TIMEOUT_MS) e non nella somma.
-      // Promise.all preserva l'ordine dell'array di partenza.
+      // Interroghiamo tutti i dispositivi in parallelo
       const result = await Promise.all(
         devices.map(async (d): Promise<TapoDeviceWithState> => {
           const ip = ipMap[d.deviceId];
@@ -215,7 +209,6 @@ export class TplinkCloudService {
           }
 
           try {
-            // DELEGAZIONE AI LAVORATORI LOCALI (con timeout per IP morti)
             const startTime: number = Date.now();
             if (protocol === 'kasa') {
               const isOn = await this.withTimeout(
@@ -228,7 +221,6 @@ export class TplinkCloudService {
               );
               return { ...d, device_on: isOn };
             } else {
-              // Tapo: leggiamo lo stato completo (acceso + luminosità + colore)
               const state = await this.withTimeout(
                 this.tapoService.getDeviceState(d.deviceId, ip),
                 TplinkCloudService.DEVICE_TIMEOUT_MS,
@@ -258,7 +250,7 @@ export class TplinkCloudService {
     }
   }
 
-  // ── ROUTING DEI COMANDI (Ecco i metodi che mancavano!) ──────────
+  // ── ROUTING DEI COMANDI ──────────
 
   /**
    * Metodo chiamato dal Controller per accendere/spegnere una presa
@@ -272,7 +264,6 @@ export class TplinkCloudService {
       return false;
     }
 
-    // Troviamo il dispositivo dalla cache per capire se è Tapo o Kasa
     const devices = await this.getCachedDevices();
     const targetDevice = devices.find((d) => d.deviceId === deviceId);
 
@@ -306,8 +297,7 @@ export class TplinkCloudService {
       return false;
     }
 
-    // Passiamo il comando direttamente allo specialista Tapo
-    // (dato che le tue luci L900 sono Tapo)
+    // Passiamo il comando direttamente a Tapo (dato che nel nostro caso le luci sono solo Tapo e la libreria Kasa non supporta luci al momento)
     return await this.tapoService.setLightStripState(
       deviceId,
       ip,
@@ -317,7 +307,7 @@ export class TplinkCloudService {
     );
   }
 
-  // ── ENERGIA & INFO (instradamento + normalizzazione) ────────────
+  // ── ENERGIA & INFO ────────────
 
   // Risolve ip e protocollo di un dispositivo dalla cache
   private async resolveDevice(

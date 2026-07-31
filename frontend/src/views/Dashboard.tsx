@@ -33,7 +33,7 @@ export default function Dashboard() {
     deleteSchedule,
   } = useScheduler();
 
-  // Luce Nenko (preset colore/effetto via dongle nRF52840)
+  // Luce Nenko
   const nenko = useNenko();
 
   // Dispositivo selezionato per il modal di dettaglio
@@ -43,7 +43,7 @@ export default function Dashboard() {
   // Info di sistema/rete del dispositivo aperto (saltate per i device Zigbee)
   const { info } = useDeviceInfo(selectedId, selectedDevice?.source);
 
-  // Consumo energetico: ha senso solo per le prese smart, non per le luci/strisce LED
+  // Consumo energetico
   const isPlug = selectedDevice ? !isLightDevice(selectedDevice) : false;
   const { energy, loading: detailsLoading } = useEnergy(selectedId, isPlug);
 
@@ -55,7 +55,9 @@ export default function Dashboard() {
         {isLoading && devices.length === 0 ? (
           <div className="py-20 text-center text-neutral-500">
             <span className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-neutral-200 border-t-indigo-500"></span>
-            <p className="mt-4 font-medium">Lettura stato dispositivi in corso...</p>
+            <p className="mt-4 font-medium">
+              Lettura stato dispositivi in corso...
+            </p>
           </div>
         ) : devices.length === 0 && nenko.presets.length === 0 ? (
           <div className="py-20 text-center text-neutral-500">

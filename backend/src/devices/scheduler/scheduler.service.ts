@@ -46,7 +46,6 @@ export class SchedulerService implements OnModuleInit, OnModuleDestroy {
 
   constructor(private readonly cloud: TplinkCloudService) {}
 
-  // ── Ciclo di vita ───────────────────────────────────────────────
   onModuleInit() {
     this.store = this.loadStore();
 
@@ -113,7 +112,7 @@ export class SchedulerService implements OnModuleInit, OnModuleDestroy {
     const delay = timer.fireAt - Date.now();
 
     if (delay <= 0) {
-      // Timer scaduto (es. backend spento allo scadere): esegui e rimuovi
+      // Timer scaduto --> esegui e rimuovi
       void this.fire(timer.deviceId, timer.targetState);
       this.removeTimer(timer.id);
       return;
@@ -178,7 +177,6 @@ export class SchedulerService implements OnModuleInit, OnModuleDestroy {
     const currentTime = `${hh}:${mm}`;
     const minuteKey = `${now.toDateString()} ${currentTime}`;
 
-    // Evita doppia esecuzione nello stesso minuto
     if (minuteKey === this.lastFiredMinute) return;
 
     const day = now.getDay();

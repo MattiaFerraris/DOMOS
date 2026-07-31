@@ -8,13 +8,12 @@ export interface SmartDevice {
   isOn: boolean;
   offline?: boolean;
   deviceModel: string;
-  deviceType?: string; // Arriva dal cloud
+  deviceType?: string;
   brightness?: number;
   color?: string;
-  source?: DeviceSource; // "tapo" (default) o "zigbee" (Philips Hue via MQTT)
+  source?: DeviceSource;
 }
 
-// ── Nenko (luce sensoriale via dongle nRF52840 → 802.15.4) ────────
 export interface NenkoPreset {
   name: string; // id interno (chiave in nenko-buttons.json)
   label: string; // etichetta mostrata sul pulsante
@@ -23,7 +22,7 @@ export interface NenkoPreset {
 }
 
 export interface NenkoState {
-  color?: string; // nome dell'ultimo preset inviato
+  color?: string;
 }
 
 // Aggiornamenti applicabili a una luce
@@ -37,8 +36,8 @@ export interface LightUpdates {
 export interface OneShotTimer {
   id: string;
   deviceId: string;
-  targetState: boolean; // true = accendi, false = spegni
-  fireAt: number; // timestamp epoch (ms) in cui scatta
+  targetState: boolean;
+  fireAt: number;
 }
 
 // Schedulazione ricorrente (accendi/spegni a orario/giorni fissi)
@@ -71,7 +70,7 @@ export interface DeviceInfo {
 
 // Determina se un dispositivo è una luce LED a partire dal modello
 export function isLightDevice(device: SmartDevice): boolean {
-  // I dispositivi Zigbee gestiti (Philips Hue) sono luci.
+  // I dispositivi Zigbee gestiti sono per il nostro progetto luci.
   if (device.source === "zigbee") return true;
   const model = device.deviceModel.toUpperCase();
   return model.includes("L") || model.includes("BULB");

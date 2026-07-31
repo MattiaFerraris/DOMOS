@@ -2,14 +2,12 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import type { SmartDevice, LightUpdates } from "../types/types";
 import * as api from "../api/domosClient";
 
-// Hook centrale: gestisce stato dispositivi, caricamento e azioni con
-// aggiornamento ottimistico della UI.
+// gestisce stato dispositivi, caricamento e azioni con aggiornamento ottimistico della UI.
 export function useDevices() {
   const [devices, setDevices] = useState<SmartDevice[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Riferimento sempre aggiornato ai device, per risalire al "source"
-  // (tapo/zigbee) dentro le callback senza ricrearle a ogni render.
+  // Riferimento sempre aggiornato ai device
   const devicesRef = useRef<SmartDevice[]>(devices);
   devicesRef.current = devices;
   const sourceOf = (deviceId: string) =>
@@ -28,33 +26,28 @@ export function useDevices() {
   }, []);
 
   useEffect(() => {
-    // Caricamento iniziale dei dispositivi all'avvio (fetch-on-mount)
+    // Caricamento iniziale dei dispositivi all'avvio
     // eslint-disable-next-line react-hooks/set-state-in-effect
     loadDevices();
   }, [loadDevices]);
 
   // Imposta lo stato assoluto di una presa con rollback in caso di errore
-  const setPlugPower = useCallback(
-    async (deviceId: string, state: boolean) => {
+  const setPlugPower = useCallback(async (deviceId: string, state: boolean) => {
+    setDevices((prev) =>
+      prev.map((d) => (d.deviceId === deviceId ? { ...d, isOn: state } : d)),
+    );
+
+    try {
+      await api.setPower(deviceId, state, sourceOf(deviceId));
+    } catch {
+      // Rollback allo stato precedente
       setDevices((prev) =>
-        prev.map((d) => (d.deviceId === deviceId ? { ...d, isOn: state } : d)),
+        prev.map((d) => (d.deviceId === deviceId ? { ...d, isOn: !state } : d)),
       );
+    }
+  }, []);
 
-      try {
-        await api.setPower(deviceId, state, sourceOf(deviceId));
-      } catch {
-        // Rollback allo stato precedente
-        setDevices((prev) =>
-          prev.map((d) =>
-            d.deviceId === deviceId ? { ...d, isOn: !state } : d,
-          ),
-        );
-      }
-    },
-    [],
-  );
-
-  // Toggle presa smart (comodità sopra setPlugPower)
+  // Toggle presa smart
   const togglePlug = useCallback(
     (deviceId: string, currentIsOn: boolean) =>
       setPlugPower(deviceId, !currentIsOn),
@@ -100,7 +93,7 @@ export function useDevices() {
     [],
   );
 
-  // Aggiornamento locale durante il trascinamento dello slider (no chiamata API)
+  // Aggiornamento locale durante il trascinamento dello slider
   const handleLocalBrightnessDrag = useCallback(
     (deviceId: string, brightness: number) => {
       setDevices((prev) =>
@@ -110,7 +103,7 @@ export function useDevices() {
     [],
   );
 
-  // Anteprima locale del colore durante il trascinamento (no chiamata API)
+  // Anteprima locale del colore durante il trascinamento
   const handleLocalColorDrag = useCallback(
     (deviceId: string, color: string) => {
       setDevices((prev) =>

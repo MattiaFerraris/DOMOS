@@ -7,8 +7,8 @@ import { TapoModule } from '../tapo/tapo.module';
 import { KasaModule } from '../kasa/kasa.module';
 
 @Module({
-  imports: [TapoModule, KasaModule], // Richiama i moduli specialisti
-  controllers: [TplinkCloudController, SchedulerController], // Sportelli aperti a React
+  imports: [TapoModule, KasaModule], // Richiama i moduli
+  controllers: [TplinkCloudController, SchedulerController],
   providers: [TplinkCloudService, SchedulerService],
 })
 export class TplinkCloudModule {}

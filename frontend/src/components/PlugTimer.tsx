@@ -3,12 +3,12 @@ import type { SmartDevice, OneShotTimer } from "../types/types";
 interface PlugTimerProps {
   device: SmartDevice;
   timer?: OneShotTimer;
-  now: number; // timestamp corrente (aggiornato ogni secondo dal parent)
+  now: number; // timestamp corrente
   onSchedule: (minutes: number, targetState: boolean) => void;
   onCancel: () => void;
 }
 
-// Durate rapide proposte (in minuti)
+// Durate rapide proposte
 const PRESETS = [5, 15, 30, 60];
 
 function formatRemaining(ms: number): string {

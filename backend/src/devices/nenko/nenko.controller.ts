@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { NenkoService } from './nenko.service';
 
-// Controller per la luce Nenko (via dongle nRF52840 → 802.15.4 raw).
+// Controller per la luce Nenko
 @Controller('api/nenko')
 export class NenkoController {
   constructor(private readonly nenkoService: NenkoService) {}
@@ -18,7 +18,7 @@ export class NenkoController {
     return { status: 'OK', data: this.nenkoService.getState() };
   }
 
-  // Elenco dei preset disponibili (per costruire i pulsanti nella UI).
+  // Elenco dei preset disponibili
   @Get('presets')
   listPresets() {
     return { status: 'OK', data: this.nenkoService.listPresets() };

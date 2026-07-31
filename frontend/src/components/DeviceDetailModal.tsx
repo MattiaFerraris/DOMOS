@@ -79,11 +79,10 @@ export default function DeviceDetailModal({
   const isLight = isLightDevice(device);
   const isPoweredOn = device.isOn;
   const brand = getBrand(device);
-  // Energia, timer e schedulazioni sono gestiti solo per Tapo/Kasa (tplink-cloud).
-  // I device Zigbee (Philips Hue) espongono solo accensione/luminosità/colore.
+  // Energia, timer e schedulazioni per Tapo/Kasa (tplink-cloud).
+  // I device Zigbee solo accensione/luminosità/colore.
   const supportsTelemetry = device.source !== "zigbee";
 
-  // Chiusura con tasto Esc
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
@@ -201,12 +200,12 @@ export default function DeviceDetailModal({
             />
           ) : null}
 
-          {/* Consumo energetico: solo prese smart, non luci/strisce LED */}
+          {/* Consumo energetico */}
           {!device.offline && !isLight ? (
             <EnergyPanel energy={energy} loading={detailsLoading} />
           ) : null}
 
-          {/* Schedulazioni ricorrenti (solo Tapo/Kasa) */}
+          {/* Schedulazioni ricorrenti */}
           {!device.offline && supportsTelemetry ? (
             <ScheduleEditor
               deviceId={device.deviceId}

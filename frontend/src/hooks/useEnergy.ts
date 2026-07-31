@@ -5,10 +5,6 @@ import * as api from "../api/domosClient";
 /**
  * Legge il consumo energetico di un dispositivo mentre il modal è aperto,
  * con refresh periodico (consumo in tempo reale).
- *
- * La misurazione ha senso solo per le prese smart (plug): le luci LED
- * — incluse le strisce Tapo e le Philips Hue zigbee — non espongono dati
- * di consumo. Per questo il polling parte solo quando `enabled` è true.
  */
 export function useEnergy(deviceId: string | null, enabled: boolean) {
   const [energy, setEnergy] = useState<DeviceEnergy | null>(null);
@@ -17,7 +13,7 @@ export function useEnergy(deviceId: string | null, enabled: boolean) {
   useEffect(() => {
     /* eslint-disable react-hooks/set-state-in-effect */
     if (!deviceId || !enabled) {
-      // Modal chiuso o dispositivo senza misurazione (luci/strisce LED)
+      // Modal chiuso
       setEnergy(null);
       setLoading(false);
       return;

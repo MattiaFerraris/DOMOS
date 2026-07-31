@@ -6,7 +6,7 @@ interface ColorSliderProps {
   onColorCommit: (color: string) => void;
 }
 
-// Tonalità approssimative dei colori preset (per posizionare il cursore)
+// Tonalità approssimative dei colori preset
 const PRESET_HUES: Record<string, number> = {
   red: 0,
   yellow: 60,
@@ -49,7 +49,11 @@ function hexToHue(hex: string): number | null {
   const d = max - Math.min(r, g, b);
   if (d === 0) return 0;
   const h =
-    max === r ? ((g - b) / d) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+    max === r
+      ? ((g - b) / d) % 6
+      : max === g
+        ? (b - r) / d + 2
+        : (r - g) / d + 4;
   const deg = Math.round(h * 60);
   return deg < 0 ? deg + 360 : deg;
 }

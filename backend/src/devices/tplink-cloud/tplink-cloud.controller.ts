@@ -11,7 +11,7 @@ import { TplinkCloudService } from './tplink-cloud.service';
 
 @Controller('api/tapo')
 export class TplinkCloudController {
-  // Inietta SOLO il Coordinatore, non importa nulla di Tapo o Kasa qui.
+  // Inietta coordinatore
   constructor(private readonly cloudService: TplinkCloudService) {}
 
   @Get('list')
@@ -34,7 +34,7 @@ export class TplinkCloudController {
       throw new HttpException('Parametri mancanti', HttpStatus.BAD_REQUEST);
     }
 
-    // Il Coordinatore riceve l'ordine e lo smista al protocollo giusto
+    // Il coordinatore riceve l'ordine e lo smista al protocollo giusto
     const success = await this.cloudService.setDevicePower(
       body.deviceId,
       body.state,

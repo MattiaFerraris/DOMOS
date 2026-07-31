@@ -1,15 +1,4 @@
 {
   "timers": [],
-  "schedules": [
-    {
-      "id": "ecb08ee5-45ee-4114-a7b8-8e7246c3a44b",
-      "deviceId": "80064DC3BDEFB4CC5AB7B2536C756CE21B36FF32",
-      "targetState": false,
-      "time": "01:30",
-      "days": [
-        2
-      ],
-      "enabled": true
-    }
-  ]
+  "schedules": []
 }

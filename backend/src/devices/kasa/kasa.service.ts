@@ -10,7 +10,7 @@ export class KasaService {
   // CACHE sessione
   private activeSessions = new Map<string, AnyDevice>();
 
-  // ── MOTORE LOCALE (Gestione Sessioni) ───────────────────────────
+  // Gestione Sessioni ───────────────────────────
 
   private async getKasaConnection(ip: string): Promise<AnyDevice> {
     if (this.activeSessions.has(ip)) {
@@ -19,7 +19,6 @@ export class KasaService {
 
     this.logger.log(`Creazione nuova sessione Kasa per IP: ${ip}`);
 
-    // NOTA: La libreria richiede un oggetto { host: string }
     const session = await this.kasaClient.getDevice({ host: ip });
 
     this.activeSessions.set(ip, session);
@@ -31,14 +30,11 @@ export class KasaService {
 
   /**
    * Legge lo stato (Acceso/Spento) in tempo reale.
-   * Usato dal Coordinatore durante la generazione della lista.
    */
   async getDeviceStatus(ip: string): Promise<boolean> {
     try {
-      // Usiamo il nostro metodo per sfruttare la cache!
       const device = await this.getKasaConnection(ip);
 
-      // Cast ad any per evitare conflitti di tipi TypeScript con i vari modelli Kasa
       const sysInfo = (await device.getSysInfo()) as any;
 
       return sysInfo.relay_state === 1; // 1 = Acceso, 0 = Spento
@@ -48,12 +44,12 @@ export class KasaService {
       this.logger.error(
         `Impossibile leggere stato Kasa (${ip}): ${(error as Error).message}`,
       );
-      throw error; // Rilanciamo l'errore al Coordinatore
+      throw error;
     }
   }
 
   /**
-   * Legge il consumo energetico in tempo reale (solo dispositivi con emeter, es. HS110/KP115).
+   * Legge il consumo energetico in tempo reale (solo dispositivi con emeter).
    * Ritorna null se il dispositivo non supporta la misurazione.
    */
   async getEnergy(ip: string): Promise<any | null> {
@@ -71,13 +67,12 @@ export class KasaService {
   }
 
   /**
-   * Accende o spegne una presa Kasa (es. HS100)
+   * Accende o spegne una presa Kasa
    */
   async setPowerState(ip: string, state: boolean): Promise<boolean> {
     try {
       const device = await this.getKasaConnection(ip);
 
-      // La libreria Kasa è intelligente e accetta direttamente il booleano
       await device.setPowerState(state);
 
       this.logger.log(`Kasa ${ip} → ${state}`);

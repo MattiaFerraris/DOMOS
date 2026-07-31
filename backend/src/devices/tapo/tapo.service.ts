@@ -44,10 +44,10 @@ export class TapoService {
     this.password = this.configService.get<string>('TPLINK_PASSWORD', '');
   }
 
-  // CACHE sessione
+  // CACHE
   private activeSessions = new Map<string, DeviceConnection>();
 
-  // ── MOTORE LOCALE (Gestione Sessioni) ───────────────────────────
+  // Gestione Sessioni ───────────────────────────
 
   private async getTapoConnection(
     deviceId: string,
@@ -70,7 +70,6 @@ export class TapoService {
 
   /**
    * Legge lo stato (Acceso/Spento) in tempo reale.
-   * Usato dal Coordinatore durante la generazione della lista.
    */
   async getDeviceStatus(deviceId: string, ip: string): Promise<boolean> {
     try {
@@ -85,8 +84,6 @@ export class TapoService {
 
   /**
    * Legge lo stato completo di una luce (acceso, luminosità, colore).
-   * Per le prese restituisce solo device_on (brightness/color = undefined).
-   * Usato dal Coordinatore per popolare la lista col vero stato del device.
    */
   async getDeviceState(
     deviceId: string,
@@ -143,7 +140,7 @@ export class TapoService {
   }
 
   /**
-   * Legge il consumo energetico (per dispositivi che lo supportano, es. P110).
+   * Legge il consumo energetico (per dispositivi che lo supportano).
    */
   async getEnergyUsage(deviceId: string, ip: string): Promise<any> {
     const device = await this.getTapoConnection(deviceId, ip);

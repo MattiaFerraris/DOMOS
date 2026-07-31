@@ -141,7 +141,6 @@ export async function setLight(
 ): Promise<void> {
   const endpoint =
     source === "zigbee" ? `${API_BASE}/zigbee/light` : `${API_BASE}/tapo/light`;
-  // Il backend Zigbee accetta solo hex; converte i preset per nome.
   const body =
     source === "zigbee"
       ? { device: deviceId, state, color: toHex(color), brightness }
@@ -155,9 +154,7 @@ export async function setLight(
   if (!response.ok) throw new Error("Network error");
 }
 
-// ── Nenko (luce sensoriale via nRF52840) ──────────────────────────
-// La lista preset arriva dal file nenko-buttons.json lato backend: è
-// disponibile anche se il dongle non è connesso (in quel caso l'invio fallirà).
+// La lista preset arriva dal file nenko-buttons.json
 export async function fetchNenkoPresets(): Promise<NenkoPreset[]> {
   try {
     const res = await fetch(`${API_BASE}/nenko/presets`);
@@ -178,7 +175,7 @@ export async function fetchNenkoState(): Promise<NenkoState> {
   }
 }
 
-// Invia un colore/effetto di preset (ritrasmette il frame catturato).
+// Invia un colore/effetto di preset
 export async function sendNenkoPreset(name: string): Promise<void> {
   const res = await fetch(`${API_BASE}/nenko/preset`, {
     method: "POST",

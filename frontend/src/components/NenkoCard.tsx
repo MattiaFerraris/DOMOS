@@ -2,12 +2,12 @@ import type { NenkoPreset } from "../types/types";
 
 interface NenkoCardProps {
   presets: NenkoPreset[];
-  active?: string; // nome del preset attivo (evidenziato)
-  error?: string | null; // nome del preset il cui invio è fallito
+  active?: string; // nome del preset attivo
+  error?: string | null;
   onSend: (name: string) => void;
 }
 
-// Icona luce sensoriale (scintille)
+// Icona luce sensoriale
 function SparklesIcon({ className }: { className?: string }) {
   return (
     <svg
@@ -24,13 +24,14 @@ function SparklesIcon({ className }: { className?: string }) {
   );
 }
 
-// Sfondo dei pulsanti "effetto" (senza rgb), per nome.
+// Sfondo dei pulsanti "effetto"
 const EFFECT_BG: Record<string, string> = {
   arcobaleno:
     "bg-gradient-to-br from-red-500 via-yellow-400 to-blue-600 text-white",
   bolle: "bg-gradient-to-br from-cyan-400 to-blue-600 text-white",
 };
-const EFFECT_FALLBACK = "bg-gradient-to-br from-indigo-500 to-purple-600 text-white";
+const EFFECT_FALLBACK =
+  "bg-gradient-to-br from-indigo-500 to-purple-600 text-white";
 
 // Testo scuro o chiaro in base alla luminosità del colore di sfondo.
 function textColorFor(hex?: string): string {
@@ -53,7 +54,7 @@ export default function NenkoCard({
 
   return (
     <div className="group flex flex-col rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm transition-all hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md">
-      {/* Intestazione — stessa struttura di DeviceCard */}
+      {/* Intestazione */}
       <div className="mb-4 flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-fuchsia-100 text-fuchsia-600">
@@ -98,7 +99,6 @@ export default function NenkoCard({
         )}
       </div>
 
-      {/* Sei pulsanti grandi al posto di accendi/spegni */}
       <div className="mt-auto grid grid-cols-2 gap-3">
         {presets.map((p) => {
           const isColor = p.tipo === "colore" && !!p.rgb;
@@ -117,9 +117,7 @@ export default function NenkoCard({
                   : undefined
               }
               className={`flex min-h-[72px] cursor-pointer items-center justify-center rounded-xl px-3 py-5 text-base font-bold shadow-sm transition-all hover:scale-[1.03] ${effectClass} ${
-                isActive
-                  ? "ring-4 ring-indigo-400 ring-offset-2"
-                  : "ring-0"
+                isActive ? "ring-4 ring-indigo-400 ring-offset-2" : "ring-0"
               }`}
             >
               {p.label}

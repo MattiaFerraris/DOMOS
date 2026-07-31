@@ -10,7 +10,7 @@ import { ReadlineParser } from '@serialport/parser-readline';
 import nenkoButtons from './nenko-buttons.json';
 
 // Struttura del file di mappatura tasti (nenko-buttons.json).
-// I frame sono stati catturati DAL VIVO col nRF Sniffer 802.15.4 (opcode 0101/0102).
+// I frame sono stati catturati DAL VIVO col nRF Sniffer 802.15.4
 interface NenkoButton {
   label: string;
   tipo: string; // "colore" | "effetto"
@@ -109,7 +109,6 @@ export class NenkoService implements OnModuleInit, OnModuleDestroy {
 
     parser.on('data', (line: string) => {
       const trimmed = line.trim();
-      // Ignora il banner d'avvio ("DOMOS Nenko bridge pronto ...").
       if (
         this.pending &&
         (trimmed.startsWith('OK') || trimmed.startsWith('ERR'))
@@ -125,7 +124,6 @@ export class NenkoService implements OnModuleInit, OnModuleDestroy {
 
   /**
    * Invia una riga di HEX e attende la risposta OK/ERR (con timeout).
-   * Serializzato tramite la coda.
    */
   private send(hexFrame: string): Promise<string> {
     const run = (): Promise<string> =>
@@ -145,8 +143,9 @@ export class NenkoService implements OnModuleInit, OnModuleDestroy {
           clearTimeout(timer);
           resolve(line);
         };
-        // HEX NUDO + newline: il firmware trasmette al '\n'.
+        // HEX + newline: il firmware trasmette al '\n'.
         this.port.write(`${hexFrame}\n`);
+        this.logger.log(`OK: frame inviato: ${hexFrame}`);
       });
 
     const result = this.queue.then(run);
@@ -173,7 +172,7 @@ export class NenkoService implements OnModuleInit, OnModuleDestroy {
     return this.state;
   }
 
-  /** Elenco dei preset disponibili con metadati (per costruire i pulsanti UI). */
+  /** Elenco dei preset disponibili con metadati */
   listPresets(): NenkoPreset[] {
     return Object.entries(BUTTONS).map(([name, b]) => ({
       name,
@@ -183,7 +182,7 @@ export class NenkoService implements OnModuleInit, OnModuleDestroy {
     }));
   }
 
-  /** Invia un preset: ritrasmette verbatim il frame catturato dal telecomando. */
+  /** Invia un preset: ritrasmette il frame catturato dal telecomando. */
   async sendPreset(name: string): Promise<boolean> {
     const button = BUTTONS[name];
     if (!button) {

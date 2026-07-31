@@ -1,4 +1,4 @@
 brew services start mosquitto
-cd /Users/mattia/zigbee2mqtt
+cd (cartella dove è scaricato zigbee2mqtt)/zigbee2mqtt
 npm ci
 npm start 

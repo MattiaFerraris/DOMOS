@@ -5,7 +5,7 @@ import * as api from "../api/domosClient";
 type TimerMap = Record<string, OneShotTimer>;
 
 /**
- * Gestisce timer one-shot e schedulazioni ricorrenti lato server.
+ * timer one-shot e schedulazioni ricorrenti lato server.
  */
 export function useScheduler() {
   const [timers, setTimers] = useState<TimerMap>({});

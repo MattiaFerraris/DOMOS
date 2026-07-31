@@ -198,7 +198,7 @@ export class MqttService implements OnModuleInit, OnModuleDestroy {
     if (!Array.isArray(devices)) return;
     const next = new Map<string, ZigbeeDevice>();
     for (const d of devices) {
-      // Saltiamo il coordinatore (la chiavetta stessa): non è comandabile.
+      // Saltiamo il coordinatore
       if (d.type === 'Coordinator') continue;
       const friendlyName: string = d.friendly_name ?? d.ieee_address;
       next.set(friendlyName, {
@@ -216,10 +216,7 @@ export class MqttService implements OnModuleInit, OnModuleDestroy {
     this.bridgeDevices = next;
     this.logger.log(`Catalogo zigbee2mqtt aggiornato (${next.size} device)`);
 
-    // zigbee2mqtt non ripubblica lo stato dei device all'avvio (i messaggi di
-    // stato non sono retained): senza una richiesta esplicita resteremmo con
-    // stato sconosciuto finché il device non cambia da solo. Chiediamo quindi
-    // lo stato corrente di ogni device che non conosciamo ancora.
+    // zigbee2mqtt non ripubblica lo stato dei device all'avvio, quindi facciamo subito una richiesta per lo stato dei dispositivi
     for (const friendlyName of next.keys()) {
       if (!this.deviceStates.has(friendlyName)) this.requestState(friendlyName);
     }
@@ -311,8 +308,7 @@ export class MqttService implements OnModuleInit, OnModuleDestroy {
   }
 
   /**
-   * Comando luce completo (accensione + luminosità + colore in un solo
-   * messaggio). Speculare a TapoService.setLightStripState.
+   * Comando luce completo
    */
   setLight(
     friendlyName: string,
