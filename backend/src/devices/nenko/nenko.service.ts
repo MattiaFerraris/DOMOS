@@ -184,6 +184,23 @@ export class NenkoService implements OnModuleInit, OnModuleDestroy {
 
   /** Invia un preset: ritrasmette il frame catturato dal telecomando. */
   async sendPreset(name: string): Promise<boolean> {
+    if (name === 'arcobaleno') {
+      // Seleziona casualmente un preset di tipo 'colore' da BUTTONS
+      const colorEntries = Object.entries(BUTTONS).filter(
+        ([, b]) => b.tipo === 'colore' && b.frame,
+      );
+      if (colorEntries.length === 0) {
+        this.logger.error(
+          'Nessun preset di tipo "colore" disponibile per Arcobaleno',
+        );
+        return false;
+      }
+      const randomIndex = Math.floor(Math.random() * colorEntries.length);
+      const [randomName, randomButton] = colorEntries[randomIndex];
+      const ok = await this.transmit(randomButton.frame);
+      if (ok) this.state = { color: randomName };
+      return ok;
+    }
     const button = BUTTONS[name];
     if (!button) {
       this.logger.error(`Preset "${name}" inesistente`);
