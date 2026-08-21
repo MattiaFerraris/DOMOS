@@ -164,6 +164,7 @@ Jest is configured inline in `package.json` (`rootDir: src`, `testRegex: .*\.spe
 | `tapo/tapo.service.spec.ts` | State reading, HSV → hex conversion, on/off and light commands |
 | `kasa/kasa.service.spec.ts` | Session caching and invalidation, emeter presence |
 | `zigbee/mqtt.service.spec.ts` | Catalog from `bridge/devices`, state ingestion, published `set` commands |
+| `nenko/nenko.service.spec.ts` | Preset lookup, frame written to the port, write queue, `OK`/`ERR`/timeout |
 | `scheduler/scheduler.service.spec.ts` | Timer arming, persistence, recurring tick |
 | `tplink-cloud/tplink-cloud.service.spec.ts` | Energy normalization across both vendors |
 

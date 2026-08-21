@@ -315,7 +315,7 @@ npm test            # run all *.spec.ts
 npm run test:cov    # with coverage
 ```
 
-Covered today: `TapoService`, `KasaService`, `MqttService` (unit conversions and state), `SchedulerService`, and `TplinkCloudService` (energy normalization). There are no end-to-end tests.
+Covered today: `TapoService`, `KasaService`, `MqttService` (unit conversions and state), `NenkoService` (frame replay over a fake serial port), `SchedulerService`, and `TplinkCloudService` (energy normalization). There are no end-to-end tests.
 
 ## Notes & limitations
 
