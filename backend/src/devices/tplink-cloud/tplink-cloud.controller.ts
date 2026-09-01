@@ -6,11 +6,14 @@ import {
   Query,
   HttpException,
   HttpStatus,
+  Logger,
 } from '@nestjs/common';
 import { TplinkCloudService } from './tplink-cloud.service';
 
 @Controller('api/tapo')
 export class TplinkCloudController {
+  private readonly logger = new Logger(TplinkCloudController.name);
+
   // Inietta coordinatore
   constructor(private readonly cloudService: TplinkCloudService) {}
 
@@ -20,7 +23,13 @@ export class TplinkCloudController {
       // Il Coordinatore scarica il cloud, legge i file, e interroga Kasa/Tapo da solo.
       const devices = await this.cloudService.getDevicesList();
       return { status: 'OK', data: devices };
-    } catch {
+    } catch (error) {
+      // Senza questo log il fallimento del Cloud era invisibile: restava solo
+      // un 500 generico e nessuna traccia della causa reale.
+      this.logger.error(
+        `Errore recupero dispositivi: ${(error as Error).message}`,
+        (error as Error).stack,
+      );
       throw new HttpException(
         'Errore recupero dispositivi',
         HttpStatus.INTERNAL_SERVER_ERROR,

@@ -94,11 +94,61 @@ export class TplinkCloudService {
     }
   }
 
+  // Rilegge l'ultimo catalogo salvato da saveDevicesInfoToDisk().
+  // Il Cloud serve solo per l'anagrafica (id, alias, modello, tipo): il controllo
+  // vero avviene in LAN. Quando il Cloud non risponde questo file basta a tenere
+  // i dispositivi comandabili. I campi non salvati non sono usati da nessun
+  // percorso di codice, quindi vengono ricostruiti vuoti.
+  private loadDevicesInfoFromDisk(): TapoDevice[] {
+    try {
+      if (!fs.existsSync(INFO_PATH)) return [];
+      const raw = fs.readFileSync(INFO_PATH, 'utf-8');
+      const parsed = JSON.parse(raw) as Partial<TapoDevice>[];
+      if (!Array.isArray(parsed)) return [];
+
+      return parsed
+        .filter((d) => !!d.deviceId)
+        .map((d) => ({
+          deviceType: d.deviceType ?? '',
+          fwVer: '',
+          appServerUrl: '',
+          deviceRegion: '',
+          deviceId: d.deviceId!,
+          deviceName: d.alias ?? '',
+          deviceHwVer: '',
+          alias: d.alias ?? '',
+          deviceMac: d.deviceMac ?? '',
+          oemId: '',
+          deviceModel: d.deviceModel ?? '',
+          hwId: '',
+          fwId: '',
+          isSameRegion: true,
+          status: 0,
+        }));
+    } catch (error) {
+      this.logger.error(
+        `Errore lettura devices-info.json: ${(error as Error).message}`,
+      );
+      return [];
+    }
+  }
+
   // Timeout massimo per ogni interrogazione locale di un dispositivo.
   // Serve a non restare appesi quando un IP in device-config.json è vecchio:
   // la libreria Tapo, dopo il fallimento KLAP, cade in login "legacy" senza
   // timeout proprio e bloccherebbe l'intera lista. Vedi withTimeout().
   private static readonly DEVICE_TIMEOUT_MS = 4000;
+
+  // Timeout per le chiamate al Cloud TP-Link. cloudLogin() e listDevices() non
+  // ne hanno uno proprio: su una connessione lenta (tethering) resterebbero
+  // appesi a tempo indeterminato bloccando l'intera GET /api/tapo/list.
+  // Più generoso di DEVICE_TIMEOUT_MS perché il Cloud fa più round trip ed è
+  // normalmente molto più lento della LAN.
+  private static readonly CLOUD_TIMEOUT_MS = 15000;
+
+  // Dopo un fallimento del Cloud aspettiamo prima di ritentare, altrimenti ogni
+  // richiesta del frontend pagherebbe di nuovo CLOUD_TIMEOUT_MS di attesa.
+  private static readonly CLOUD_RETRY_BACKOFF_MS = 30000;
 
   // Avvolge una promise con un timeout: se non si risolve entro `ms`, rigetta.
   // la richiesta non viene annullata, ma il Coordinatore non resta più bloccato e marca il dispositivo come offline.
@@ -145,7 +195,11 @@ export class TplinkCloudService {
     if (this.cloudConnectionPromise) return this.cloudConnectionPromise;
 
     this.cloudConnectionPromise = (async () => {
-      const api = await cloudLogin(this.email, this.password);
+      const api = await this.withTimeout(
+        cloudLogin(this.email, this.password),
+        TplinkCloudService.CLOUD_TIMEOUT_MS,
+        'Cloud TP-Link (login)',
+      );
       this.cloudApi = api;
       this.cloudApiExpiry = Date.now() + 30 * 60 * 1000;
       this.logger.log('Cloud login rinnovato');
@@ -154,6 +208,9 @@ export class TplinkCloudService {
 
     try {
       return await this.cloudConnectionPromise;
+    } catch (error) {
+      this.logger.error(`Cloud login fallito: ${(error as Error).message}`);
+      throw error;
     } finally {
       this.cloudConnectionPromise = null;
     }
@@ -166,18 +223,57 @@ export class TplinkCloudService {
     if (this.cachedDevicesPromise) return this.cachedDevicesPromise;
 
     this.cachedDevicesPromise = (async () => {
-      const cloudApi = await this.getCloudConnection();
-      const devices = await cloudApi.listDevices();
+      try {
+        const cloudApi = await this.getCloudConnection();
+        const devices = await this.withTimeout(
+          cloudApi.listDevices(),
+          TplinkCloudService.CLOUD_TIMEOUT_MS,
+          'Cloud TP-Link (listDevices)',
+        );
 
-      this.cachedDevices = devices;
-      this.devicesExpiry = Date.now() + 5 * 60 * 1000;
-      this.logger.log(
-        `Device list aggiornata dal Cloud (${this.cachedDevices.length} dispositivi)`,
-      );
+        this.cachedDevices = devices;
+        this.devicesExpiry = Date.now() + 5 * 60 * 1000;
+        this.logger.log(
+          `Device list aggiornata dal Cloud (${this.cachedDevices.length} dispositivi)`,
+        );
 
-      this.saveDevicesInfoToDisk(devices);
+        this.saveDevicesInfoToDisk(devices);
 
-      return devices;
+        return devices;
+      } catch (error) {
+        // Il Cloud dà solo l'anagrafica; i comandi viaggiano in LAN sugli IP di
+        // device-config.json. Se il Cloud cade non ha senso perdere anche il
+        // controllo locale: ripieghiamo sull'ultimo catalogo conosciuto.
+        this.logger.error(
+          `Cloud non raggiungibile: ${(error as Error).message}`,
+        );
+
+        // Il backoff evita che ogni richiesta successiva riparta con un altro
+        // timeout pieno mentre la connessione è ancora giù.
+        this.devicesExpiry =
+          Date.now() + TplinkCloudService.CLOUD_RETRY_BACKOFF_MS;
+
+        if (this.cachedDevices.length) {
+          this.logger.warn(
+            `Uso la device list già in memoria (${this.cachedDevices.length} dispositivi)`,
+          );
+          return this.cachedDevices;
+        }
+
+        const fromDisk = this.loadDevicesInfoFromDisk();
+        if (fromDisk.length) {
+          this.logger.warn(
+            `Uso devices-info.json come fallback (${fromDisk.length} dispositivi)`,
+          );
+          this.cachedDevices = fromDisk;
+          return fromDisk;
+        }
+
+        this.logger.error(
+          'Nessun catalogo disponibile: né Cloud, né cache in memoria, né devices-info.json',
+        );
+        throw error;
+      }
     })();
 
     try {
