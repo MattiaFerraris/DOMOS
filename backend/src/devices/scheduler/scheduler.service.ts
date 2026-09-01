@@ -54,8 +54,10 @@ export class SchedulerService implements OnModuleInit, OnModuleDestroy {
       this.armTimer(timer);
     }
 
-    // Tick ogni 60s per le schedulazioni ricorrenti
-    this.tickInterval = setInterval(() => this.checkSchedules(), 60 * 1000);
+    // Tick ogni 20s: con un intervallo di 60s il drift di setInterval può far
+    // saltare del tutto un minuto. Il guard su lastFiredMinute rende il
+    // controllo idempotente, quindi ogni minuto scatta comunque una volta sola.
+    this.tickInterval = setInterval(() => this.checkSchedules(), 20 * 1000);
     this.logger.log(
       `Scheduler avviato (${this.store.timers.length} timer, ${this.store.schedules.length} schedulazioni)`,
     );

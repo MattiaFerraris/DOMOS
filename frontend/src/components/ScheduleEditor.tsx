@@ -9,7 +9,10 @@ interface ScheduleEditorProps {
   onDelete: (id: string) => void;
 }
 
-const DAY_LABELS = ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"];
+// Indicizzato per Date.getDay(): 0=Domenica .. 6=Sabato (stessa convenzione del backend)
+const DAY_LABELS = ["Dom", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab"];
+// Ordine di visualizzazione: settimana che parte da lunedì
+const DAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
 
 function daysSummary(days: number[]): string {
   if (days.length === 7) return "Ogni giorno";
@@ -17,7 +20,9 @@ function daysSummary(days: number[]): string {
   // Lun-Ven
   if (sorted.join() === "1,2,3,4,5") return "Feriali";
   if (sorted.join() === "0,6") return "Weekend";
-  return sorted.map((d) => DAY_LABELS[d]).join(" ");
+  return DAY_ORDER.filter((d) => days.includes(d))
+    .map((d) => DAY_LABELS[d])
+    .join(" ");
 }
 
 export default function ScheduleEditor({
@@ -44,7 +49,7 @@ export default function ScheduleEditor({
       deviceId,
       targetState,
       time,
-      days: [...days].sort(),
+      days: [...days].sort((a, b) => a - b),
       enabled: true,
     });
   };
@@ -157,7 +162,7 @@ export default function ScheduleEditor({
         </div>
 
         <div className="flex justify-between gap-1">
-          {DAY_LABELS.map((label, d) => (
+          {DAY_ORDER.map((d) => (
             <button
               key={d}
               onClick={() => toggleDay(d)}
@@ -167,7 +172,7 @@ export default function ScheduleEditor({
                   : "bg-white text-neutral-500 hover:bg-neutral-100"
               }`}
             >
-              {label[0]}
+              {DAY_LABELS[d][0]}
             </button>
           ))}
         </div>
